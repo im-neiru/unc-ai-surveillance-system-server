@@ -4,14 +4,10 @@ use tokio;
 // local imports
 mod server_config;
 mod app_state;
+mod routes;
 
 use server_config::ServerConfig;
 use app_state::AppState;
-
-#[actix_web::get("/")]
-async fn root() -> impl Responder {
-    HttpResponse::Ok().body("Test")
-}
 
 fn main() -> std::io::Result<()> {
     let server_config = ServerConfig::load();
@@ -31,7 +27,7 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
 
         App::new()
             .app_data(data)
-            .service(root)
+            .service(routes::users::scope())
     })
     .bind(server_config.web_server.clone())?
     .run()
