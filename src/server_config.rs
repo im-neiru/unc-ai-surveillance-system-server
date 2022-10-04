@@ -1,6 +1,6 @@
 use std::io::BufReader;
 use std::fs::File;
-
+use std::net::{SocketAddr, ToSocketAddrs};
 use serde::{Serialize, Deserialize};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -20,5 +20,12 @@ impl ServerConfig {
         let reader = BufReader::new(File::open("server-config.yaml")
             .expect("Unable to open file"));
         serde_yaml::from_reader(reader).unwrap()
+    }
+}
+
+impl ToSocketAddrs for WebServerConfig {
+    type Iter = std::vec::IntoIter<SocketAddr>;
+    fn to_socket_addrs(&self) -> std::io::Result<Self::Iter> {
+        (self.address.as_ref(), self.port).to_socket_addrs()
     }
 }
