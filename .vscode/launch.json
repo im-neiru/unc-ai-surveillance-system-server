@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'unc-ai-surveillance-system-server'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=unc-ai-surveillance-system-server",
+                    "--package=unc-ai-surveillance-system-server"
+                ],
+                "filter": {
+                    "name": "unc-ai-surveillance-system-server",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'unc-ai-surveillance-system-server'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=unc-ai-surveillance-system-server",
+                    "--package=unc-ai-surveillance-system-server"
+                ],
+                "filter": {
+                    "name": "unc-ai-surveillance-system-server",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
