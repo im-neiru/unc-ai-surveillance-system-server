@@ -3,8 +3,10 @@ use tokio;
 
 // local imports
 mod server_config;
+mod app_state;
 
 use server_config::ServerConfig;
+use app_state::AppState;
 
 #[actix_web::get("/")]
 async fn root() -> impl Responder {
@@ -22,8 +24,13 @@ fn main() -> std::io::Result<()> {
 }
 
 async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
-    HttpServer::new(|| {
+    let database_url = server_config.database_url.clone();
+
+    HttpServer::new(move || {
+        let data = actix_web::web::Data::new(AppState::create(database_url.as_str()));
+
         App::new()
+            .app_data(data)
             .service(root)
     })
     .bind(server_config.web_server.clone())?
