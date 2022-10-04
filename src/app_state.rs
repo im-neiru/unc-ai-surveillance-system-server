@@ -1,7 +1,7 @@
 use diesel::{PgConnection, Connection};
 
 pub struct AppState {
-    db_connection: PgConnection,
+    pub(crate) db_connection: PgConnection,
 }
 
 impl AppState {
