@@ -6,13 +6,15 @@ use serde::{Serialize, Deserialize};
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ServerConfig {
     #[serde(alias = "web-server")]
-    pub web_server: WebServerConfig
+    pub web_server: WebServerConfig,
+    #[serde(alias = "database-url")]
+    pub database_url: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct WebServerConfig {
     pub port: u16,
-    pub address: String
+    pub address: String,
 }
 
 impl ServerConfig {
