@@ -1,3 +1,5 @@
+use std::sync::Mutex;
+
 use actix_web::{HttpServer, App, Responder, HttpResponse};
 use tokio;
 
@@ -5,6 +7,7 @@ use tokio;
 mod server_config;
 mod app_state;
 mod routes;
+mod schema;
 
 use server_config::ServerConfig;
 use app_state::AppState;
@@ -23,7 +26,7 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     let database_url = server_config.database_url.clone();
 
     HttpServer::new(move || {
-        let data = actix_web::web::Data::new(AppState::create(database_url.as_str()));
+        let data = actix_web::web::Data::new(Mutex::new(AppState::create(database_url.as_str())));
 
         App::new()
             .app_data(data)
