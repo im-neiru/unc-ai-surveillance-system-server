@@ -1,16 +1,14 @@
-use std::sync::Mutex;
-
-use actix_web::{HttpServer, App, Responder, HttpResponse};
+use actix_web::{HttpServer, App};
 use tokio;
 
 // local imports
 mod server_config;
-mod app_state;
+mod data;
 mod routes;
 mod schema;
 
 use server_config::ServerConfig;
-use app_state::AppState;
+use data::AppData;
 
 fn main() -> std::io::Result<()> {
     let server_config = ServerConfig::load();
@@ -23,13 +21,11 @@ fn main() -> std::io::Result<()> {
 }
 
 async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
-    let database_url = server_config.database_url.clone();
+    let data = actix_web::web::Data::new(AppData::create(&server_config.database_url));
 
     HttpServer::new(move || {
-        let data = actix_web::web::Data::new(Mutex::new(AppState::create(database_url.as_str())));
-
         App::new()
-            .app_data(data)
+            .app_data(data.clone())
             .service(routes::users::scope())
     })
     .bind(server_config.web_server.clone())?
