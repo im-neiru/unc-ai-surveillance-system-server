@@ -1,7 +1,8 @@
 use diesel::{PgConnection, Connection};
+use tokio::sync::Mutex;
 
 pub struct AppData<'a> {
-    pub(crate) db_connection: PgConnection,
+    pub(crate) db_connection: Mutex<PgConnection>,
     argon_config: argon2::Config<'a>,
 }
 
@@ -24,7 +25,7 @@ impl AppData<'_> {
         };
 
         Self {
-            db_connection: PgConnection::establish(database_url).unwrap(),
+            db_connection: Mutex::new(PgConnection::establish(database_url).unwrap()),
             argon_config: config
         }
     }
