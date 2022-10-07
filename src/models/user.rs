@@ -1,4 +1,4 @@
-use diesel::Insertable;
+use diesel::{Insertable, Queryable, AsChangeset};
 use super::{PasswordHash, UserRole};
 
 #[derive(Insertable)]
@@ -11,13 +11,13 @@ pub struct UserInsert<'a> {
     pub assigned_role: UserRole,
 }
 
-#[derive(diesel::Queryable)]
+#[derive(Debug, Queryable, AsChangeset)]
 #[diesel(table_name = crate::schema::users)]
-pub struct UserSelect<'a> {
+pub struct UserSelect {
     pub id : uuid::Uuid,
-    pub username: &'a str,
-    pub first_name: &'a str,
-    pub last_name: &'a str,
+    pub username: String,
+    pub first_name: String,
+    pub last_name: String,
     pub password_hash: PasswordHash,
     pub assigned_role: UserRole,
 }
