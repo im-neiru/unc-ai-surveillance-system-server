@@ -1,6 +1,14 @@
 use actix_web::{post, web};
 use actix_web::{HttpResponse, Responder};
+
+use diesel::{QueryDsl, RunQueryDsl, OptionalExtension};
+use diesel::ExpressionMethods;
+
 use serde::{Serialize, Deserialize};
+
+use crate::data::AppData;
+use crate::models::{UserSelect, PasswordHash};
+use crate::schema::users::username;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct LoginData {
@@ -8,9 +16,27 @@ struct LoginData {
     pub password: String,
 }
 
+
 #[post("/login")]
-async fn post_login(state: web::Data<crate::AppState>, inputs: web::Json<LoginData>) -> impl Responder {
-    HttpResponse::Ok().body("Test")
+async fn post_login((body, state): 
+    (web::Json<LoginData>, web::Data<AppData>)) -> impl Responder {
+        
+    use crate::schema::users::dsl::*;
+    
+    let argon2 = state.argon2(&body.password);
+    let mut database = state.connect_database();
+
+    if let Some(user) = users.filter(username.eq(&body.username)).first::<UserSelect>(&mut database).optional().unwrap()
+    {
+        if argon2 == user.password_hash {
+            todo!("Generate web tokens");
+        }
+    }
+    else {
+        return HttpResponse::Unauthorized();
+    }
+
+    HttpResponse::Ok()
 }
 
 pub fn scope() -> actix_web::Scope {
