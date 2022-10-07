@@ -1,15 +1,25 @@
-use diesel::{PgConnection, Connection};
-use tokio::sync::Mutex;
+use diesel::PgConnection;
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 
 pub struct AppData {
-    pub(crate) db_connection: Mutex<PgConnection>,
+    db_pool: Pool<ConnectionManager<PgConnection>>
 }
 
 impl AppData {
     pub fn create(database_url: &str) -> Self {
+
+        let manager = ConnectionManager::new(database_url);
+
         Self {
-            db_connection: Mutex::new(PgConnection::establish(database_url).unwrap())
+            db_pool: Pool::builder()
+            .test_on_check_out(true)
+            .build(manager)
+            .expect("Could not build connection pool")
         }
+    }
+
+    pub fn connect_database(&self) -> PooledConnection<ConnectionManager<PgConnection>> {
+        self.db_pool.get().unwrap()
     }
 
     #[allow(mutable_transmutes)]
