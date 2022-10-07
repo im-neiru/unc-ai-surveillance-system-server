@@ -5,7 +5,7 @@ use diesel::serialize::ToSql;
 use diesel::deserialize::FromSql;
 use diesel::sql_types::Binary;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[derive(AsExpression, FromSqlRow)]
 #[diesel(sql_type = diesel::sql_types::Binary)]
 pub struct PasswordHash([u8; 64]);
