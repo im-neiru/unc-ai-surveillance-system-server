@@ -1,36 +1,40 @@
 use diesel::{PgConnection, Connection};
 use tokio::sync::Mutex;
 
-pub struct AppData<'a> {
+pub struct AppData {
     pub(crate) db_connection: Mutex<PgConnection>,
-    argon_config: argon2::Config<'a>,
 }
 
-impl AppData<'_> {
-    const SALT: &[u8] = b"salty#Q9YNePSTpw";
-
+impl AppData {
     pub fn create(database_url: &str) -> Self {
-        use argon2::*;
-
-        let config = Config {
-            variant: Variant::Argon2i,
-            version: Version::Version13,
-            mem_cost: 4096,
-            time_cost: 4,
-            lanes: 4,
-            thread_mode: ThreadMode::Parallel,
-            secret: &[],
-            ad: &[],
-            hash_length: 64
-        };
-
         Self {
-            db_connection: Mutex::new(PgConnection::establish(database_url).unwrap()),
-            argon_config: config
+            db_connection: Mutex::new(PgConnection::establish(database_url).unwrap())
         }
     }
 
-    pub fn password_hash(&self, password: &str) -> String {
-        argon2::hash_encoded(password.as_bytes(), Self::SALT, &self.argon_config).unwrap()
+    #[allow(mutable_transmutes)]
+    pub fn argon2(&self, password: &str) -> [u8; 64] {
+        use std::mem::*;
+
+        let mut salt: [u8; 16] = *b"salty#Q9YNePSTpw";
+        let mut hash : [u8; 64] =  unsafe { MaybeUninit::uninit().assume_init() };
+
+        let mut context = argon2::Context {
+            out:        &mut hash,
+            pwd:        Some(unsafe { transmute::<&[u8], &mut [u8]>(password.as_bytes()) }),
+            salt:       Some(&mut salt),
+            secret:     None,
+            ad:         None,
+            t_cost:     8,
+            m_cost:     1024,
+            lanes:      4,
+            threads:    4,
+            version:    argon2::Version::Version13,
+            flags:      argon2::Flags::DEFAULT,
+        };
+
+        argon2::i_ctx(&mut context).unwrap();
+
+        return hash;
     }
 }
