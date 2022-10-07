@@ -1,11 +1,11 @@
+use diesel::{AsExpression, FromSqlRow};
 use diesel::pg::Pg;
-use diesel::expression::AsExpression;
 use diesel::serialize::ToSql;
 use diesel::deserialize::FromSql;
 use diesel::sql_types::SmallInt;
 
 #[derive(Debug, Clone, Copy)]
-#[derive(AsExpression)]
+#[derive(AsExpression, FromSqlRow)]
 #[diesel(sql_type = SmallInt)]
 pub enum UserRole {
     SecurityGuard,

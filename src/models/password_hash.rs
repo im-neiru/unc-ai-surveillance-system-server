@@ -1,13 +1,12 @@
 use std::fmt::Display;
-
-use diesel::AsExpression;
+use diesel::{AsExpression, FromSqlRow};
 use diesel::pg::Pg;
 use diesel::serialize::ToSql;
 use diesel::deserialize::FromSql;
 use diesel::sql_types::Binary;
 
 #[derive(Debug, Clone)]
-#[derive(AsExpression)]
+#[derive(AsExpression, FromSqlRow)]
 #[diesel(sql_type = diesel::sql_types::Binary)]
 pub struct PasswordHash([u8; 64]);
 
