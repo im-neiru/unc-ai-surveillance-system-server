@@ -4,7 +4,7 @@ use diesel::serialize::ToSql;
 use diesel::deserialize::FromSql;
 use diesel::sql_types::SmallInt;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[derive(AsExpression, FromSqlRow)]
 #[diesel(sql_type = SmallInt)]
 pub enum UserRole {
