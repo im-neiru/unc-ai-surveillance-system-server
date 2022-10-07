@@ -5,6 +5,7 @@ use tokio;
 mod server_config;
 mod data;
 mod routes;
+mod models;
 mod schema;
 
 use server_config::ServerConfig;
