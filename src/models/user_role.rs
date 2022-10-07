@@ -1,6 +1,7 @@
 use diesel::pg::Pg;
 use diesel::expression::AsExpression;
 use diesel::serialize::ToSql;
+use diesel::deserialize::FromSql;
 use diesel::sql_types::SmallInt;
 
 #[derive(Debug, Clone, Copy)]
@@ -21,5 +22,17 @@ impl ToSql<SmallInt, Pg> for UserRole where i16: ToSql<SmallInt, Pg> {
             UserRole::SecurityHead => &NUMERIC_VALUES[1],
             UserRole::SystemAdmin => &NUMERIC_VALUES[2],
         }, out)
+    }
+}
+
+impl FromSql<SmallInt, Pg> for UserRole where i16: FromSql<SmallInt, Pg> {
+    fn from_sql(bytes: diesel::backend::RawValue<'_, Pg>) -> diesel::deserialize::Result<Self> {
+
+       match <i16 as FromSql::<SmallInt, Pg>>::from_sql(bytes)? {
+            1 => Ok(Self::SecurityGuard),
+            2 => Ok(Self::SecurityHead),
+            3 => Ok(Self::SystemAdmin),
+            _=> Err("Unrecognized UserRole variant".into())
+       }
     }
 }
