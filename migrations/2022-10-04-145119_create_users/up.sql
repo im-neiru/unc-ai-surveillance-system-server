@@ -10,3 +10,10 @@ CREATE TABLE users(
 
     PRIMARY KEY (id)
 );
+
+
+-- Sample users
+
+INSERT INTO users(username, first_name, last_name, password_hash, assigned_role)
+VALUES ('vladimir', 'Vlad', 'Tepes', 
+decode('Wo+1JdceNVhCjdKSAPq6bDUJJKgFfwhJyCPjCXVQ6tp7lAeHu6YMsmJB3AYusuLsO9ym6EemeN2FJnWOx/Ta2g==', 'base64'), 1);
