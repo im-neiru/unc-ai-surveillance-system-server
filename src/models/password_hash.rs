@@ -1,11 +1,11 @@
 use diesel::AsExpression;
-use diesel::backend::Backend;
+use diesel::pg::Pg;
 use diesel::serialize::ToSql;
 use diesel::sql_types::Binary;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 #[derive(AsExpression)]
-#[diesel(sql_type = Binary)]
+#[diesel(sql_type = diesel::sql_types::Binary)]
 pub struct PasswordHash([u8; 64]);
 
 impl From<[u8; 64]> for PasswordHash {
@@ -15,8 +15,8 @@ impl From<[u8; 64]> for PasswordHash {
     }
 }
 
-impl<DB> ToSql<Binary, DB> for PasswordHash where DB: Backend, [u8; 64]: ToSql<Binary, DB> {
-    fn to_sql<'b>(&'b self, out: &mut diesel::serialize::Output<'b, '_, DB>) -> diesel::serialize::Result {
-        ToSql::<Binary, DB>::to_sql(&self.0, out)
+impl<'a> ToSql<Binary, Pg> for PasswordHash where &'a [u8]: ToSql<Binary, Pg> {
+    fn to_sql<'b>(&'b self, out: &mut diesel::serialize::Output<'b, '_, Pg>) -> diesel::serialize::Result {
+        <[u8] as ToSql<Binary, Pg>>::to_sql(self.0.as_ref(), out)
     }
 }
