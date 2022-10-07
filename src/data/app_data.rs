@@ -1,11 +1,11 @@
 use diesel::{PgConnection, Connection};
 
-pub struct AppState<'a> {
+pub struct AppData<'a> {
     pub(crate) db_connection: PgConnection,
     argon_config: argon2::Config<'a>,
 }
 
-impl AppState<'_> {
+impl AppData<'_> {
     const SALT: &[u8] = b"salty#Q9YNePSTpw";
 
     pub fn create(database_url: &str) -> Self {
