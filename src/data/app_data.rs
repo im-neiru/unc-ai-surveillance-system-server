@@ -13,7 +13,7 @@ impl AppData {
     }
 
     #[allow(mutable_transmutes)]
-    pub fn argon2(&self, password: &str) -> [u8; 64] {
+    pub fn argon2(&self, password: &str) -> crate::models::PasswordHash {
         use std::mem::*;
 
         let mut salt: [u8; 16] = *b"salty#Q9YNePSTpw";
@@ -35,6 +35,6 @@ impl AppData {
 
         argon2::i_ctx(&mut context).unwrap();
 
-        return hash;
+        return hash.into();
     }
 }
