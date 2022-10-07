@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use diesel::AsExpression;
 use diesel::pg::Pg;
 use diesel::serialize::ToSql;
@@ -12,6 +14,12 @@ impl From<[u8; 64]> for PasswordHash {
     #[inline]
     fn from(arr: [u8; 64]) -> Self {
         Self(arr)
+    }
+}
+
+impl Display for PasswordHash {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.to_string().fmt(f)
     }
 }
 
