@@ -7,7 +7,7 @@ diesel::table! {
         created_time -> Timestamp,
         last_login -> Timestamp,
         logout_time -> Nullable<Timestamp>,
-        device_type -> Int2,
+        device_os -> Int2,
         device_name -> Varchar,
         device_sig -> Bytea,
     }
