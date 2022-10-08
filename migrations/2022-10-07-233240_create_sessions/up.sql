@@ -4,7 +4,7 @@ CREATE TABLE sessions(
     created_time TIMESTAMP NOT NULL,
     last_login TIMESTAMP NOT NULL,
     logout_time TIMESTAMP,
-    device_type SMALLINT NOT NULL CHECK(device_type IN (1, 2)),
+    device_os SMALLINT NOT NULL CHECK(device_os IN (1, 2, 3)),
     device_name VARCHAR(64) NOT NULL,
     device_sig BYTEA NOT NULL,
 
