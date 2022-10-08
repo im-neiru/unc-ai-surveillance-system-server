@@ -11,8 +11,9 @@ actix-web = "4.2.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 serde_json = "1.0"
-diesel = { version = "2.0.0", features = ["postgres", "r2d2", "uuid"] }
+diesel = { version = "2.0.0", features = ["postgres", "r2d2", "uuid", "chrono"] }
 base64 = "0.13.0"
 just-argon2 = "1.2.0"
 uuid = { version = "1.1.2", features = ["serde", "v4"] }
+chrono = "0.4.22"
 jsonwebtoken = "8.1.1"
