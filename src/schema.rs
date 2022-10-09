@@ -9,7 +9,7 @@ diesel::table! {
         logout_time -> Nullable<Timestamp>,
         device_os -> Int2,
         device_name -> Varchar,
-        device_sig -> Bytea,
+        device_signature -> Bytea,
     }
 }
 

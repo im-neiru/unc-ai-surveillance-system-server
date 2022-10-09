@@ -6,7 +6,7 @@ CREATE TABLE sessions(
     logout_time TIMESTAMP,
     device_os SMALLINT NOT NULL CHECK(device_os IN (1, 2, 3)),
     device_name VARCHAR(64) NOT NULL,
-    device_sig BYTEA NOT NULL,
+    device_signature BYTEA NOT NULL,
 
     PRIMARY KEY(id)
 );
