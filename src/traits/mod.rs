@@ -3,3 +3,4 @@ mod from_hexadecimal;
 
 pub use to_hexadecimal::ToHexadecimal;
 pub use from_hexadecimal::FromHexadecimal;
+pub use from_hexadecimal::HexParseErr;
