@@ -2,7 +2,6 @@ use diesel::pg::Pg;
 use diesel::serialize::ToSql;
 use diesel::sql_types::Bytea;
 use diesel::AsExpression;
-use serde::ser::SerializeSeq;
 
 #[derive(Clone, Copy)]
 #[derive(PartialEq, Eq)]
@@ -33,13 +32,14 @@ impl PartialEq for SignitureBits {
 
 impl core::fmt::Debug for DeviceSignature {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:#032X}", unsafe { self.0.integer })
+        std::fmt::Display::fmt(&self, f)
     }
 }
 
 impl std::fmt::Display for DeviceSignature {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:#032X}", unsafe { self.0.integer })
+        use crate::traits::ToHexadecimal;
+        f.write_str(unsafe { &self.0.integer.to_hexadecimal() })
     }
 }
 
