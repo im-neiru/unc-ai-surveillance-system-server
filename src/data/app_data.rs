@@ -1,8 +1,12 @@
 use diesel::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
+use jsonwebtoken::{Header, Algorithm, EncodingKey};
+
+use crate::models::Claims;
 
 pub struct AppData {
-    db_pool: Pool<ConnectionManager<PgConnection>>
+    db_pool: Pool<ConnectionManager<PgConnection>>,
+    jwt_header: Header
 }
 
 impl AppData {
@@ -14,7 +18,8 @@ impl AppData {
             db_pool: Pool::builder()
             .test_on_check_out(true)
             .build(manager)
-            .expect("Could not build connection pool")
+            .expect("Could not build connection pool"),
+            jwt_header: Header::new(Algorithm::HS512)
         }
     }
 
@@ -46,5 +51,9 @@ impl AppData {
         argon2::i_ctx(&mut context).unwrap();
 
         return hash.into();
+    }
+
+    pub fn jwt_encode(&self, claims: &Claims) -> String {
+        jsonwebtoken::encode(&self.jwt_header, claims,&EncodingKey::from_secret("2b9e6f9ec298c3a7ebde69e941ed2d81".as_ref())).unwrap()
     }
 }
