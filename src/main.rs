@@ -9,6 +9,9 @@ mod models;
 mod schema;
 mod traits;
 
+#[cfg(test)]
+mod tests;
+
 use server_config::ServerConfig;
 use data::AppData;
 
