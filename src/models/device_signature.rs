@@ -57,3 +57,18 @@ impl<'a> serde::Serialize for DeviceSignature {
         serializer.serialize_str(unsafe { &self.0.integer.to_hexadecimal() })
     }
 }
+
+impl<'de> serde::Deserialize<'de> for DeviceSignature where String: serde::Deserialize<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de> {
+        use crate::traits::FromHexadecimal;
+        let hex = String::deserialize(deserializer)?;
+        let integer = u128::from_hexadecimal(&hex)
+            .or_else(|err| 
+                Err(serde::de::Error::custom(err.to_string()))
+            )?;
+        
+        Ok(Self(SignitureBits { integer }))
+    }
+}
