@@ -2,9 +2,6 @@ pub trait FromHexadecimal {
     fn from_hexadecimal(hex: &str) -> Result<Self, HexParseErr> where Self: Sized;
 }
 
-#[derive(Debug)]
-pub struct HexParseErr;
-
 macro_rules! int_of {
     ($value:expr) => {
         match ($value) {
@@ -24,7 +21,7 @@ macro_rules! int_of {
             'D' | 'd' => Ok(13),
             'E' | 'e' => Ok(14),
             'F' | 'f' => Ok(15),
-            _ => Err(HexParseErr { })
+            _ => Err(HexParseErr (HexParseErrReason::InvalidCharacter($value)))
         }
     };
 }
@@ -34,7 +31,8 @@ impl FromHexadecimal for u128 {
         use seq_macro::seq;
 
         let mut chars = hex.chars();
-        let mut int = int_of!(chars.next().ok_or(HexParseErr{ })?)?;
+        let mut int = int_of!(chars.next()
+            .ok_or(HexParseErr(HexParseErrReason::EmptyString))?)?;
 
         seq!(N in 0..32 {
             if let Some(c) = chars.next() {
@@ -46,4 +44,30 @@ impl FromHexadecimal for u128 {
 
         Ok(int)
     }
+}
+
+pub struct HexParseErr(HexParseErrReason);
+
+impl std::fmt::Display for HexParseErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.0 {
+            HexParseErrReason::EmptyString =>
+                f.write_str("Empty string"),
+            HexParseErrReason::InvalidCharacter(chr) => 
+                write!(f, "'{}' is not a hexadecimal base", chr),
+        }
+    }
+}
+
+impl std::fmt::Debug for HexParseErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self, f)
+    }
+}
+
+impl std::error::Error for HexParseErr { }
+
+enum HexParseErrReason {
+    EmptyString,
+    InvalidCharacter(char),
 }
