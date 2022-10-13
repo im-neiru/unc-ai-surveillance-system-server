@@ -2,6 +2,7 @@ use diesel::pg::Pg;
 use diesel::serialize::ToSql;
 use diesel::sql_types::Bytea;
 use diesel::AsExpression;
+use serde::ser::SerializeSeq;
 
 #[derive(Clone, Copy)]
 #[derive(PartialEq, Eq)]
@@ -45,5 +46,14 @@ impl std::fmt::Display for DeviceSignature {
 impl<'a> ToSql<Bytea, Pg> for DeviceSignature where &'a [u8]: ToSql<Bytea, Pg> {
     fn to_sql<'b>(&'b self, out: &mut diesel::serialize::Output<'b, '_, Pg>) -> diesel::serialize::Result {
         <[u8] as ToSql::<Bytea, Pg>>::to_sql(unsafe { &self.0.bytes }, out)
+    }
+}
+
+impl<'a> serde::Serialize for DeviceSignature {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer {
+        use crate::traits::ToHexadecimal;
+        serializer.serialize_str(unsafe { &self.0.integer.to_hexadecimal() })
     }
 }
