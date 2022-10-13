@@ -7,14 +7,16 @@ use diesel::ExpressionMethods;
 use serde::{Serialize, Deserialize};
 
 use crate::data::AppData;
-use crate::models::{UserSelect, PasswordHash};
-use crate::schema::users::username;
-
+use crate::models::{UserSelect, DeviceSignature, DeviceOs};
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct LoginData {
     pub username: String,
     pub password: String,
+    pub device_os: DeviceOs,
+    pub device_name: String,
+    pub device_signature: DeviceSignature,
 }
+
 
 
 #[post("/login")]
