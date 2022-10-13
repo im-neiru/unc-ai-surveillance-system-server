@@ -9,7 +9,7 @@ macro_rules! hex_of {
         if ($value) <  0x0a {
             (($value) as u8 + 0x30) as char
         } else {
-            (($value) as u8 + 0x31) as char
+            (($value) as u8 + 0x37) as char
         }
     };
 }
