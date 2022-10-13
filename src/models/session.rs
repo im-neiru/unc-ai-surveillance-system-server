@@ -12,4 +12,5 @@ pub struct SessionInsert<'a> {
     logout_time: Option<NaiveDateTime>,
     device_os: DeviceOs,
     device_name: &'a str,
+    device_hash: &'a [u8]
 }
