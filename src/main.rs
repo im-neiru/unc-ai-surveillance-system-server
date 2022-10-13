@@ -7,6 +7,7 @@ mod data;
 mod routes;
 mod models;
 mod schema;
+mod traits;
 
 use server_config::ServerConfig;
 use data::AppData;
