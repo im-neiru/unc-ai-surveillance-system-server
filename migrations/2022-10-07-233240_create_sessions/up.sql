@@ -8,5 +8,6 @@ CREATE TABLE sessions(
     device_name VARCHAR(64) NOT NULL,
     device_hash BYTEA NOT NULL,
 
-    PRIMARY KEY(id)
+    PRIMARY KEY(id),
+    UNIQUE(device_hash)
 );

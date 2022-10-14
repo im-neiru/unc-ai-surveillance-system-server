@@ -8,7 +8,8 @@ CREATE TABLE users(
     password_hash BYTEA NOT NULL,
     assigned_role SMALLINT NOT NULL CHECK(assigned_role IN (1, 2, 3)),
 
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    UNIQUE(username)
 );
 
 
