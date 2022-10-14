@@ -72,3 +72,9 @@ impl<'de> serde::Deserialize<'de> for DeviceSignature where String: serde::Deser
         Ok(Self(SignitureBits { integer }))
     }
 }
+
+impl Into<[u8; 16]> for DeviceSignature {
+    fn into(self) -> [u8; 16] {
+        unsafe { self.0.bytes }
+    }
+}
