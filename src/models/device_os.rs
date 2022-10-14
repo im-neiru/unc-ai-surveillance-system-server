@@ -5,7 +5,7 @@ use diesel::AsExpression;
 use diesel::serialize::ToSql;
 use diesel:: sql_types::SmallInt;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[derive(Serialize, Deserialize)]
 #[derive(AsExpression)]
 #[diesel(sql_type = SmallInt)]
