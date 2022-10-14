@@ -1,6 +1,7 @@
 use diesel::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use jsonwebtoken::{Header, Algorithm, EncodingKey};
+use tokio::sync::Mutex;
 use xxhash_rust::xxh3::Xxh3;
 
 use crate::models::Claims;
@@ -8,7 +9,7 @@ use crate::models::Claims;
 pub struct AppData {
     db_pool: Pool<ConnectionManager<PgConnection>>,
     jwt_header: Header,
-    xxh3: Xxh3
+    xxh3: Mutex<Xxh3>
 }
 
 impl AppData {
@@ -22,7 +23,7 @@ impl AppData {
             .build(manager)
             .expect("Could not build connection pool"),
             jwt_header: Header::new(Algorithm::HS512),
-            xxh3: Xxh3::with_seed(0x13ac0750331f23db)
+            xxh3: Mutex::new(Xxh3::with_seed(0x13ac0750331f23db))
         }
     }
 
@@ -60,8 +61,10 @@ impl AppData {
         jsonwebtoken::encode(&self.jwt_header, claims,&EncodingKey::from_secret("2b9e6f9ec298c3a7ebde69e941ed2d81".as_ref())).unwrap()
     }
 
-    pub fn xxh3_128bits(&mut self, data: &[u8]) -> u128 {
-        self.xxh3.update(data);
-        self.xxh3.digest128()
+    pub async fn xxh3_128bits<const N: usize>(&self, data: [u8; N]) -> u128 {
+        let mut xxh3  = self.xxh3.lock().await;
+
+        xxh3.update(&data);
+        xxh3.digest128()
     }
 }
