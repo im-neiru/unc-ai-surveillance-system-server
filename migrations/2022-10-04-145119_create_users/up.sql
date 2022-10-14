@@ -12,6 +12,9 @@ CREATE TABLE users(
     UNIQUE(username)
 );
 
+GRANT
+    SELECT, INSERT, UPDATE 
+    ON users TO unc_client;
 
 -- Sample users
 

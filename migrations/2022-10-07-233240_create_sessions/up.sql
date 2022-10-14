@@ -11,3 +11,7 @@ CREATE TABLE sessions(
     PRIMARY KEY(id),
     UNIQUE(device_hash)
 );
+
+GRANT
+    SELECT, INSERT, UPDATE 
+    ON sessions TO unc_client;
