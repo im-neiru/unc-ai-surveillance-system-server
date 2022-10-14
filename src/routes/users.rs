@@ -8,7 +8,7 @@ use diesel::ExpressionMethods;
 use serde::{Serialize, Deserialize};
 
 use crate::data::AppData;
-use crate::models::{UserSelect, DeviceSignature, DeviceOs, Claims, SessionInsert};
+use crate::models::{UserSelect, DeviceSignature, DeviceOs, JwtClaims, SessionInsert};
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct LoginData {
     pub username: String,
@@ -66,7 +66,7 @@ async fn create_session(state: web::Data<AppData>,
         .unwrap()
     };
 
-    state.jwt_encode(&Claims { session_id })
+    state.jwt_encode(&JwtClaims { session_id })
 }
 
 pub fn scope() -> actix_web::Scope {

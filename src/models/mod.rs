@@ -3,7 +3,7 @@ mod password_hash;
 mod device_os;
 mod user;
 mod device_signature;
-mod claims;
+mod jwt_claims;
 mod session;
 
 pub use user_role::UserRole;
@@ -14,4 +14,4 @@ pub use device_signature::DeviceSignature;
 pub use user::UserInsert;
 pub use user::UserSelect;
 pub use session::SessionInsert;
-pub use claims::Claims;
+pub use jwt_claims::JwtClaims;

@@ -4,7 +4,7 @@ use jsonwebtoken::{Header, Algorithm, EncodingKey};
 use tokio::sync::Mutex;
 use xxhash_rust::xxh3::Xxh3;
 
-use crate::models::Claims;
+use crate::models::JwtClaims;
 
 pub struct AppData {
     db_pool: Pool<ConnectionManager<PgConnection>>,
@@ -57,7 +57,7 @@ impl AppData {
         return hash.into();
     }
 
-    pub fn jwt_encode(&self, claims: &Claims) -> String {
+    pub fn jwt_encode(&self, claims: &JwtClaims) -> String {
         jsonwebtoken::encode(&self.jwt_header, claims,&EncodingKey::from_secret("2b9e6f9ec298c3a7ebde69e941ed2d81".as_ref())).unwrap()
     }
 
