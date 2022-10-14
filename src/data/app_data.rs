@@ -1,6 +1,6 @@
 use diesel::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
-use jsonwebtoken::{Header, Algorithm, EncodingKey};
+use jsonwebtoken::{Header, EncodingKey, Validation, DecodingKey};
 use tokio::sync::Mutex;
 use xxhash_rust::xxh3::Xxh3;
 
@@ -8,11 +8,12 @@ use crate::models::JwtClaims;
 
 pub struct AppData {
     db_pool: Pool<ConnectionManager<PgConnection>>,
-    jwt_header: Header,
     xxh3: Mutex<Xxh3>
 }
 
 impl AppData {
+    const JWT_SECRET: &str = "2b9e6f9ec298c3a7ebde69e941ed2d81";
+    
     pub fn create(database_url: &str) -> Self {
 
         let manager = ConnectionManager::new(database_url);
@@ -22,7 +23,6 @@ impl AppData {
             .test_on_check_out(true)
             .build(manager)
             .expect("Could not build connection pool"),
-            jwt_header: Header::new(Algorithm::HS512),
             xxh3: Mutex::new(Xxh3::with_seed(0x13ac0750331f23db))
         }
     }
@@ -58,7 +58,18 @@ impl AppData {
     }
 
     pub fn jwt_encode(&self, claims: &JwtClaims) -> String {
-        jsonwebtoken::encode(&self.jwt_header, claims,&EncodingKey::from_secret("2b9e6f9ec298c3a7ebde69e941ed2d81".as_ref())).unwrap()
+        jsonwebtoken::encode(&Header::default(),
+            claims, 
+            &EncodingKey::from_secret(Self::JWT_SECRET.as_ref()))
+            .unwrap()
+    }
+
+    pub fn jwt_decode(&self, jwt: &str) -> JwtClaims {
+        jsonwebtoken::decode(jwt, 
+            &DecodingKey::from_secret(Self::JWT_SECRET.as_ref()), 
+            &Validation::default())
+            .unwrap()
+            .claims
     }
 
     pub async fn xxh3_128bits<const N: usize>(&self, data: [u8; N]) -> u128 {
