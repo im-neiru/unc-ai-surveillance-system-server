@@ -23,7 +23,7 @@ impl actix_web::FromRequest for UserClaims {
 
     fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
         let req = req.clone();
-        println!("Test");
+        
         Box::pin(async move {
             let token = req.cookie("jwt")
                 .unwrap()
