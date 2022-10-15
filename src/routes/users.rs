@@ -66,7 +66,7 @@ async fn create_session(state: web::Data<AppData>,
         .unwrap()
     };
 
-    state.jwt_encode(&JwtClaims { session_id })
+    state.jwt_encode(&JwtClaims::new(session_id) )
 }
 
 pub fn scope() -> actix_web::Scope {
