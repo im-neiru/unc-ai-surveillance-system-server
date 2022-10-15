@@ -9,7 +9,8 @@ use diesel::ExpressionMethods;
 use serde::{Serialize, Deserialize};
 
 use crate::data::AppData;
-use crate::models::{UserSelect, DeviceSignature, DeviceOs, JwtClaims, SessionInsert};
+use crate::models::{UserSelect, DeviceSignature, DeviceOs, JwtClaims, SessionInsert, UserClaims};
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct LoginData {
     pub username: String,
@@ -73,7 +74,29 @@ async fn create_session(state: web::Data<AppData>,
     state.jwt_encode(&JwtClaims::new(session_id) )
 }
 
+#[actix_web::get("/info")]
+async fn get_info((state, user): (web::Data<AppData>, UserClaims)) -> impl Responder {
+    use crate::schema::users;
+
+    let database = &mut *state.connect_database();
+
+    let (username, last_name, first_name) = users::table.select((
+        users::username,
+        users::first_name,
+        users::last_name,
+    )).filter(users::id.eq(user.id))
+    .first::<(String, String, String)>(database)
+    .unwrap();
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "username": username,
+        "firstname": first_name, 
+        "last_name": last_name,
+    }))
+}
+
 pub fn scope() -> actix_web::Scope {
     web::scope("/users")
         .service(post_login)
+        .service(get_info)
 }
