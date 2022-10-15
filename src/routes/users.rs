@@ -1,6 +1,7 @@
 use actix_web::{post, web};
 use actix_web::{HttpResponse, Responder};
 
+use chrono::Utc;
 use diesel::r2d2::{PooledConnection, ConnectionManager};
 use diesel::{QueryDsl, RunQueryDsl, OptionalExtension, PgConnection};
 use diesel::ExpressionMethods;
@@ -61,6 +62,9 @@ async fn create_session(state: web::Data<AppData>,
 
         diesel::insert_into(sessions)
         .values(&record)
+        .on_conflict(device_hash)
+        .do_update()
+        .set(last_login.eq(Utc::now().naive_utc()))
         .returning(id)
         .get_result::<uuid::Uuid>(&mut *database)
         .unwrap()
