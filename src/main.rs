@@ -8,6 +8,7 @@ mod routes;
 mod models;
 mod schema;
 mod traits;
+mod logging;
 
 #[cfg(test)]
 mod tests;
