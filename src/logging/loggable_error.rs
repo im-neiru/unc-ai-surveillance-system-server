@@ -1,11 +1,14 @@
-use std::borrow::Borrow;
+use std::fmt::Display;
 
 use actix_web::{Responder, CustomizeResponder, http::StatusCode};
 
+#[derive(Clone, Debug)]
 pub struct Loggable {
     pub message: String
 }
 
+
+#[derive(Clone, Debug)]
 pub struct LoggableWithResponse {
     pub message: String,
     pub status_code: actix_web::http::StatusCode,
@@ -31,5 +34,17 @@ impl LoggableWithResponse {
             .clone()
             .customize()
             .with_status(self.status_code)
+    }
+}
+
+impl Display for Loggable {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.message)
+    }
+}
+
+impl Display for LoggableWithResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.message)
     }
 }
