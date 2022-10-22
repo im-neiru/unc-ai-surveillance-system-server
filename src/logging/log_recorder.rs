@@ -31,6 +31,11 @@ pub struct LogWriter<const LEVEL: LogLevel> {
 
 impl LogRecorder {
     #[inline]
+    pub fn new() -> Self {
+        Self { entries: Vec::new() }
+    }
+
+    #[inline]
     pub(self) fn write(&mut self,
         level: LogLevel,
         message: &str,
