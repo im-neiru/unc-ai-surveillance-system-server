@@ -36,6 +36,6 @@ impl LogRecorder {
 
     #[inline]
     pub(self) fn create_writer<'a, const LEVEL: LogLevel>(&'a mut self) -> LogWriter<'a, LEVEL>  {
-        LogWriter { recorder: &mut &self }
+        LogWriter { recorder: self }
     }
 }
