@@ -1,3 +1,9 @@
+use std::future::Future;
+
+use actix_web::web::Data;
+use actix_web::FromRequest;
+use tokio::sync::Mutex;
+
 pub struct LogRecorder {
     entries: Vec<LogEntry>
 }
@@ -19,8 +25,8 @@ pub enum LogLevel {
     Trace,
 }
 
-pub struct LogWriter<'a, const LEVEL: LogLevel> {
-    recorder: &'a mut LogRecorder
+pub struct LogWriter<const LEVEL: LogLevel> {
+    recorder: Data<Mutex<LogRecorder>>
 }
 
 impl LogRecorder {
@@ -33,18 +39,16 @@ impl LogRecorder {
             timestamp
         });
     }
-
-    #[inline]
-    pub(self) fn create_writer<'a, const LEVEL: LogLevel>(&'a mut self) -> LogWriter<'a, LEVEL>  {
-        LogWriter { recorder: self }
-    }
 }
 
-impl<'a, const LEVEL: LogLevel> LogWriter<'a, LEVEL> {
+impl<const LEVEL: LogLevel> LogWriter<LEVEL> {
     #[inline]
-    pub(super) fn write(&'a mut self,
+    pub(super) async fn write(&mut self,
         message: &str, 
         timestamp: chrono::DateTime<chrono::Utc>) {
-        self.recorder.write(LEVEL, message, timestamp)
+        self.recorder
+            .lock()
+            .await
+            .write(LEVEL, message, timestamp)
     }
 }
