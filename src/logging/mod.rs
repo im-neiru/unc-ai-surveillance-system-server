@@ -1,6 +1,5 @@
-use actix_web::ResponseError;
-
-mod log_writer;
+mod log_recorder;
 mod loggable_error;
 
-pub use log_writer::LogWriter;
+pub use log_recorder::LogRecorder;
+pub use log_recorder::LogWriter;
