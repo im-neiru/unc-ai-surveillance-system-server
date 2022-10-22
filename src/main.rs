@@ -1,3 +1,6 @@
+#![feature(adt_const_params)]
+#![feature(generic_const_exprs)]
+
 use actix_web::{HttpServer, App};
 use tokio;
 
