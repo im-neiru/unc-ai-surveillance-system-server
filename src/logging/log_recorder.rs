@@ -39,3 +39,12 @@ impl LogRecorder {
         LogWriter { recorder: self }
     }
 }
+
+impl<'a, const LEVEL: LogLevel> LogWriter<'a, LEVEL> {
+    #[inline]
+    pub(super) fn write(&'a mut self,
+        message: &str, 
+        timestamp: chrono::DateTime<chrono::Utc>) {
+        self.recorder.write(LEVEL, message, timestamp)
+    }
+}
