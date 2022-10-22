@@ -1,5 +1,5 @@
 pub struct LogRecorder {
-    pub(self) entries: Vec<LogEntry>
+    entries: Vec<LogEntry>
 }
 
 pub(super) struct LogEntry {
@@ -17,5 +17,22 @@ pub(super) enum LogLevel {
 }
 
 pub struct LogWriter<'a, const LEVEL: LogLevel> {
-    owner: &'a LogRecorder
+    recorder: &'a mut LogRecorder
+}
+
+impl LogRecorder {
+    #[inline]
+    pub(self) fn write(&mut self,
+        level: LogLevel,
+        message: &str,
+        timestamp: chrono::DateTime<chrono::Utc>) {
+        self.entries.push(LogEntry { level, message: message.to_string(),
+            timestamp
+        });
+    }
+
+    #[inline]
+    pub(self) fn create_writer<'a, const LEVEL: LogLevel>(&'a mut self) -> LogWriter<'a, LEVEL>  {
+        LogWriter { recorder: &mut &self }
+    }
 }
