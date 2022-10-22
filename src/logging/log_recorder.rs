@@ -52,3 +52,27 @@ impl<const LEVEL: LogLevel> LogWriter<LEVEL> {
             .write(LEVEL, message, timestamp)
     }
 }
+
+impl<const LEVEL: LogLevel> FromRequest for LogWriter<LEVEL> {
+    type Error = actix_web::Error;
+
+    type Future = std::pin::Pin<Box<dyn Future<Output = Result<LogWriter<LEVEL>, actix_web::Error>>>>;
+
+    fn from_request(req: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
+        let req = req.clone();
+
+        Box::pin(async move {
+            let writer = Self {
+                recorder: req.app_data::<Data<Mutex<LogRecorder>>>()
+                    .expect("Unable to retrieve the LogRecorder")
+                    .clone()
+            };
+
+            Ok(writer)
+        })
+    }
+
+    fn extract(req: &actix_web::HttpRequest) -> Self::Future {
+        Self::from_request(req, &mut actix_web::dev::Payload::None)
+    }
+}
