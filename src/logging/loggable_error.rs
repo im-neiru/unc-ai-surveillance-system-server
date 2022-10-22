@@ -4,7 +4,8 @@ use actix_web::{Responder, CustomizeResponder, http::StatusCode};
 
 #[derive(Clone, Debug)]
 pub struct Loggable {
-    pub message: String
+    pub message: String,
+    timestamp: chrono::DateTime<chrono::Utc>
 }
 
 
@@ -12,23 +13,26 @@ pub struct Loggable {
 pub struct LoggableWithResponse {
     pub message: String,
     pub status_code: actix_web::http::StatusCode,
+    timestamp: chrono::DateTime<chrono::Utc>
 }
 
 impl Loggable {
-    pub fn log(&self, writer: &mut super::LogWriter) {
-        writer.write(&self.message);
+    pub fn log<'a, const LEVEL: super::LogLevel>(&self, writer: &'a mut super::LogWriter<'a, LEVEL>) {
+        writer.write(&self.message, self.timestamp);
     }
 
     pub fn with_response(&self, status_code: StatusCode) -> LoggableWithResponse {
         LoggableWithResponse {
             message: self.message.clone(),
-            status_code }
+            timestamp: self.timestamp,
+            status_code
+        }
     }
 }
 
 impl LoggableWithResponse {
-    pub fn log(&self, writer: &mut super::LogWriter) -> CustomizeResponder<String> {
-        writer.write(&self.message);
+    pub fn log<'a, const LEVEL: super::LogLevel>(&self, writer: &'a mut super::LogWriter<'a, LEVEL>) -> CustomizeResponder<String> {
+        writer.write(&self.message, self.timestamp);
 
         self.message
             .clone()
