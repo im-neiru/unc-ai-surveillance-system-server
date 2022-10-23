@@ -9,7 +9,6 @@ pub struct Loggable {
     timestamp: chrono::DateTime<chrono::Utc>
 }
 
-
 #[derive(Clone, Debug)]
 pub struct LoggableWithResponse {
     pub log_message: String,
@@ -19,6 +18,15 @@ pub struct LoggableWithResponse {
 }
 
 impl Loggable {
+    
+    #[inline]
+    pub fn new(log_message: &str, timestamp: chrono::DateTime<chrono::Utc>) -> Self {
+        Self {
+            log_message: log_message.to_string(),
+            timestamp
+        }
+    }
+
     pub async fn log<const LEVEL: super::LogLevel>(&self, writer: &mut super::LogWriter<LEVEL>) {
         writer.write(&self.log_message, self.timestamp).await;
     }
@@ -34,6 +42,20 @@ impl Loggable {
 }
 
 impl LoggableWithResponse {
+
+    #[inline]
+    pub fn new(log_message: &str,
+        response_message: &str,
+        status_code: actix_web::http::StatusCode,
+        timestamp: chrono::DateTime<chrono::Utc>) -> Self {
+        Self {
+            log_message: log_message.to_string(),
+            response_message: response_message.to_string(),
+            status_code,
+            timestamp
+        }
+    }
+
     pub async fn log<const LEVEL: super::LogLevel>(&self, writer: &mut super::LogWriter<LEVEL>) -> CustomizeResponder<String> {
         writer.write(&self.log_message, self.timestamp).await;
 
