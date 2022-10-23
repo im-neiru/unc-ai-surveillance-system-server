@@ -17,8 +17,8 @@ pub struct LoggableWithResponse {
 }
 
 impl Loggable {
-    pub fn log<'a, const LEVEL: super::LogLevel>(&self, writer: &'a mut super::LogWriter<'a, LEVEL>) {
-        writer.write(&self.message, self.timestamp);
+    pub async fn log<const LEVEL: super::LogLevel>(&self, writer: &mut super::LogWriter<LEVEL>) {
+        writer.write(&self.message, self.timestamp).await;
     }
 
     pub fn with_response(&self, status_code: StatusCode) -> LoggableWithResponse {
@@ -31,8 +31,8 @@ impl Loggable {
 }
 
 impl LoggableWithResponse {
-    pub fn log<'a, const LEVEL: super::LogLevel>(&self, writer: &'a mut super::LogWriter<'a, LEVEL>) -> CustomizeResponder<String> {
-        writer.write(&self.message, self.timestamp);
+    pub async fn log<const LEVEL: super::LogLevel>(&self, writer: &mut super::LogWriter<LEVEL>) -> CustomizeResponder<String> {
+        writer.write(&self.message, self.timestamp).await;
 
         self.message
             .clone()
