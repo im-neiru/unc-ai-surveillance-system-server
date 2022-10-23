@@ -2,7 +2,8 @@
 #![feature(generic_const_exprs)]
 
 use actix_web::{HttpServer, App};
-use tokio;
+use logging::LogRecorder;
+use tokio::{self, sync::Mutex};
 
 // local imports
 mod server_config;
@@ -31,10 +32,12 @@ fn main() -> std::io::Result<()> {
 
 async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     let data = actix_web::web::Data::new(AppData::create(&server_config.database_url));
+    let logger = actix_web::web::Data::new(Mutex::new(LogRecorder::new()));
 
     HttpServer::new(move || {
         App::new()
             .app_data(data.clone())
+            .app_data(logger.clone())
             .service(routes::users::scope())
     })
     .bind(server_config.web_server.clone())?
