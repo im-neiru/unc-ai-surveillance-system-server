@@ -1,4 +1,16 @@
-use diesel::{Insertable, Queryable, AsChangeset};
+use actix_web::http::StatusCode;
+use diesel::{
+    Insertable,
+    Queryable,
+    AsChangeset,
+    PgConnection,
+    QueryDsl,
+    RunQueryDsl,
+    ExpressionMethods, OptionalExtension
+};
+
+use crate::logging::LoggableWithResponse;
+
 use super::{PasswordHash, UserRole};
 
 #[derive(Insertable)]
@@ -20,4 +32,26 @@ pub struct UserSelect {
     pub last_name: String,
     pub password_hash: PasswordHash,
     pub assigned_role: UserRole,
+}
+
+impl UserSelect {
+    pub fn select_by_username(connection: &mut PgConnection, username: &str) -> Result<Self, LoggableWithResponse> {
+        use crate::schema::users::dsl;
+
+        match dsl::users.filter(dsl::username.eq(username))
+        .first::<Self>(connection).optional() {
+            Ok(Some(user)) => Ok(user),
+            Ok(None) => Err(LoggableWithResponse::new(
+                "A user enter incorrect username",
+                "Invalid username or password",
+                StatusCode::INTERNAL_SERVER_ERROR,
+            )),
+            Err(err) => Err(LoggableWithResponse::new(
+                err.to_string().as_str(),
+                "Failed to retrieved data",
+                StatusCode::INTERNAL_SERVER_ERROR
+                )
+            ),
+        }
+    }
 }
