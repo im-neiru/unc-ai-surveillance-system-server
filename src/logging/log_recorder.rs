@@ -14,4 +14,13 @@ impl LogRecorder {
     pub fn new() -> Self {
         Self { entries: Vec::new() }
     }
+
+    #[inline]
+    pub fn record<L>(&mut self, log: L) where L: super::Loggable + Sized {
+        self.entries.push(LogEntry {
+            level: log.level(),
+            message: log.message(),
+            timestamp: log.timestamp(),
+        })
+    }
 }
