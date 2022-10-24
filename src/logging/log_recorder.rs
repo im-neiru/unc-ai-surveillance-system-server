@@ -7,3 +7,11 @@ pub(super) struct LogEntry {
     pub(super) message: String,
     pub(super) timestamp: chrono::DateTime<chrono::Utc>
 }
+
+impl LogRecorder {
+
+    #[inline]
+    pub fn new() -> Self {
+        Self { entries: Vec::new() }
+    }
+}
