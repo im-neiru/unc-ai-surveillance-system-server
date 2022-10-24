@@ -51,10 +51,10 @@ impl actix_web::ResponseError for LogResponseError {
 impl Loggable {
     
     #[inline]
-    pub fn new(log_message: &str, timestamp: chrono::DateTime<chrono::Utc>) -> Self {
+    pub fn new(log_message: &str) -> Self {
         Self {
             log_message: log_message.to_string(),
-            timestamp
+            timestamp: chrono::Utc::now(),
         }
     }
 
@@ -80,13 +80,12 @@ impl LoggableWithResponse {
     #[inline]
     pub fn new(log_message: &str,
         response_message: &str,
-        status_code: actix_web::http::StatusCode,
-        timestamp: chrono::DateTime<chrono::Utc>) -> Self {
+        status_code: actix_web::http::StatusCode) -> Self {
         Self {
             log_message: Some(log_message.to_string()),
             response_message:  Some(response_message.to_string()),
             status_code,
-            timestamp
+            timestamp: chrono::Utc::now(),
         }
     }
 
