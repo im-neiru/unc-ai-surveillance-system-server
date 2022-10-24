@@ -1,15 +1,19 @@
+use actix_web::http::StatusCode;
 use actix_web::{post, web};
-use actix_web::{HttpResponse, Responder};
+use actix_web::Responder;
 
 use chrono::Utc;
 use diesel::r2d2::{PooledConnection, ConnectionManager};
-use diesel::{QueryDsl, RunQueryDsl, OptionalExtension, PgConnection};
+use diesel::{QueryDsl, RunQueryDsl, PgConnection};
 use diesel::ExpressionMethods;
 
 use serde::{Serialize, Deserialize};
+use serde_json::json;
 
 use crate::data::AppData;
+use crate::logging::{LogWriter, LogLevel, LoggedResult, LoggableWithResponse};
 use crate::models::{UserSelect, DeviceSignature, DeviceOs, JwtClaims, SessionInsert, UserClaims};
+use crate::try_log;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct LoginData {
@@ -21,27 +25,23 @@ struct LoginData {
 }
 
 #[post("/login")]
-async fn post_login((body, state): 
-(web::Json<LoginData>, web::Data<AppData>)) -> impl Responder {
-    use crate::schema::users::dsl::*;
-    
-    let argon2 = state.argon2(&body.password);
+async fn post_login((body, state, mut log_info): 
+(web::Json<LoginData>, web::Data<AppData>, LogWriter<{ LogLevel::Information }>)) -> LoggedResult<impl Responder> {
     let mut database = state.connect_database();
     let jwt;
+    let user = try_log!(UserSelect::select_by_username(&mut database, &body.username), &mut log_info);
+    
+    try_log!(state.validate_password(user.password_hash, &body.password).await, &mut log_info);
 
-    if let Some(user) = users.filter(username.eq(&body.username)).first::<UserSelect>(&mut database).optional().unwrap()
-    {
-        if argon2 != user.password_hash {
-            return HttpResponse::Unauthorized().body("");
-        }
+    jwt = create_session(state, &mut database, &body, user).await;
 
-        jwt = create_session(state, &mut database, &body, user).await;
-    }
-    else {
-        return HttpResponse::Unauthorized().body("");
-    }
-
-    HttpResponse::Ok().body(jwt)
+    Ok(json!({
+        "jwt": jwt
+    })
+    .to_string()
+    .customize()
+    .append_header(("Content-Type", "application/json"))
+    .with_status(StatusCode::OK))
 }
 
 async fn create_session(state: web::Data<AppData>,
@@ -75,24 +75,33 @@ async fn create_session(state: web::Data<AppData>,
 }
 
 #[actix_web::get("/info")]
-async fn get_info((state, user): (web::Data<AppData>, UserClaims)) -> impl Responder {
+async fn get_info((state, user, mut log_info): (web::Data<AppData>, UserClaims, LogWriter<{ LogLevel::Information}>)) -> LoggedResult<impl Responder> {
     use crate::schema::users;
 
     let database = &mut *state.connect_database();
-
-    let (username, last_name, first_name) = users::table.select((
+    let (username, last_name, first_name) = match users::table.select((
         users::username,
         users::first_name,
         users::last_name,
     )).filter(users::id.eq(user.id))
-    .first::<(String, String, String)>(database)
-    .unwrap();
-
-    HttpResponse::Ok().json(serde_json::json!({
+    .first::<(String, String, String)>(database) {
+        Ok(val) => val,
+        Err(_) => return LoggableWithResponse::new(
+            "Unable to retrieve user data",
+            "Unable to retrieve data",
+            StatusCode::INTERNAL_SERVER_ERROR)
+            .log(&mut log_info).await,
+    };
+    
+    Ok(json!({
         "username": username,
         "firstname": first_name, 
         "last_name": last_name,
-    }))
+    })
+    .to_string()
+    .customize()
+    .append_header(("Content-Type", "application/json"))
+    .with_status(StatusCode::OK))
 }
 
 pub fn scope() -> actix_web::Scope {
