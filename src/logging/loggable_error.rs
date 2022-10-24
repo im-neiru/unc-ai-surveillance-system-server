@@ -90,6 +90,15 @@ impl LoggableWithResponse {
         }
     }
 
+    pub fn ok() -> Self {
+        Self {
+            log_message: None,
+            response_message:  None,
+            status_code: StatusCode::OK,
+            timestamp: chrono::Utc::now(),
+        }
+    }
+
     pub async fn log<const LEVEL: super::LogLevel>(&self, writer: &mut super::LogWriter<LEVEL>) -> super::LoggedResult<CustomizeResponder<String>> {
         if let Some(log_msg) =  &self.log_message {
             writer.write(log_msg, self.timestamp).await;
