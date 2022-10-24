@@ -1,10 +1,11 @@
 mod log_recorder;
-mod loggable_error;
+mod log_error;
 mod logger;
+mod log_level;
 
 pub use logger::Logger;
 
 pub use log_recorder::LogRecorder;
 pub use log_recorder::LogWriter;
-pub use log_recorder::LogLevel;
+pub use log_level::LogLevel;
 
