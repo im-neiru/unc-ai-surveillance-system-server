@@ -1,10 +1,12 @@
+use actix_web::http::StatusCode;
 use diesel::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use jsonwebtoken::{Header, EncodingKey, Validation, DecodingKey};
 use tokio::sync::Mutex;
 use xxhash_rust::xxh3::Xxh3;
 
-use crate::models::JwtClaims;
+use crate::logging::LoggableWithResponse;
+use crate::models::{JwtClaims, PasswordHash};
 
 pub struct AppData {
     db_pool: Pool<ConnectionManager<PgConnection>>,
@@ -55,6 +57,17 @@ impl AppData {
         argon2::i_ctx(&mut context).unwrap();
 
         return hash.into();
+    }
+
+    pub async fn validate_password(&self, hash: PasswordHash, password: &str) -> Result<(), LoggableWithResponse> {
+        if hash == self.argon2(password) {
+            return Ok(());
+        }
+
+        Err(LoggableWithResponse::new(
+            "A user has entered invalid password",
+            "Invalid username or password",
+            StatusCode::UNAUTHORIZED))
     }
 
     pub fn jwt_encode(&self, claims: &JwtClaims) -> String {
