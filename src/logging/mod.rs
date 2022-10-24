@@ -10,3 +10,13 @@ pub use loggable_error::LoggableWithResponse;
 pub use loggable_error::LogResponseError;
 
 pub type LoggedResult<T> = Result<T, LogResponseError>;
+
+#[macro_export]
+macro_rules! try_log {
+    ($res:expr, $logger:expr) => {
+        match ($res) {
+            Ok(obj) => obj,
+            Err(err) => return Ok(err.log($logger).await?),
+        }
+    };
+}
