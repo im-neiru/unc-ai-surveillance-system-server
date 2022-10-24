@@ -130,8 +130,8 @@ impl Display for Loggable {
 
 impl Display for LoggableWithResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match self.log_message {
-            Some(msg) => msg.as_str(),
+        f.write_str(match self.log_message.as_ref() {
+            Some(msg) => msg,
             None => "No log message",
         })
     }
