@@ -56,7 +56,9 @@ impl actix_web::ResponseError for LoggableResponseError {
                 HeaderValue::from_static("application/json"));
 
         res.set_body(actix_web::body::BoxBody::new(
-            format!("{{\"message\": {}}}", self.message.1)
+            serde_json::json!({
+                "message": self.message.1
+            }).to_string()
         ))
     }
 }
