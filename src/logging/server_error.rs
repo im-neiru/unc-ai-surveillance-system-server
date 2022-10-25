@@ -10,8 +10,8 @@ pub struct ServerError {
 
 impl super::Loggable for ServerError {   
     #[inline]
-    fn message(&self) -> String {
-        self.message
+    fn message<'a>(&'a self) -> &'a str {
+        &self.message
     }
 
     fn level(&self) -> super::LogLevel {

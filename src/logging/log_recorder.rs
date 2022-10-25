@@ -19,7 +19,7 @@ impl LogRecorder {
     pub fn record<L>(&mut self, log: &L) where L: super::Loggable + Sized {
         self.entries.push(LogEntry {
             level: log.level(),
-            message: log.message(),
+            message: log.message().to_owned(),
             timestamp: log.timestamp(),
         })
     }
