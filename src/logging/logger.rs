@@ -1,20 +1,27 @@
 use std::future::{ready, Ready};
+use tokio::sync::Mutex;
 
-use actix_web::{
-    dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    Error,
+use actix_web::Error;
+use actix_web::web::Data;
+
+use actix_web::dev::{
+    forward_ready,
+    Service,
+    ServiceRequest,
+    ServiceResponse,
+    Transform
 };
 
 pub struct Logger;
 
 
-impl<S, B> Transform<S, ServiceRequest> for Logger
+impl<S, R> Transform<S, ServiceRequest> for Logger
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S: Service<ServiceRequest, Response = ServiceResponse<R>, Error = Error>,
     S::Future: 'static,
-    B: 'static,
+    R: 'static
 {
-    type Response = ServiceResponse<B>;
+    type Response = ServiceResponse<R>;
     type Error = Error;
     type InitError = ();
     type Transform = LoggerMiddleware<S>;
@@ -29,13 +36,13 @@ pub struct LoggerMiddleware<S> {
     service: S,
 }
 
-impl<S, B> Service<ServiceRequest> for LoggerMiddleware<S>
+impl<S, R> Service<ServiceRequest> for LoggerMiddleware<S>
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S: Service<ServiceRequest, Response = ServiceResponse<R>, Error = Error>,
     S::Future: 'static,
-    B: 'static,
+    R: 'static
 {
-    type Response = ServiceResponse<B>;
+    type Response = ServiceResponse<R>;
     type Error = Error;
     type Future = std::pin::Pin<Box<dyn std::future::Future<Output = Result<Self::Response, Self::Error>>>>;
 
@@ -47,6 +54,17 @@ where
         Box::pin(async move {
             let response = future.await?;
 
+            if let Some(error) = response.response().error() {    
+                if let Some(log) = error.as_error::<super::LoggableResponseError>() {
+                    let recorder = request.app_data::<Data<Mutex<super::LogRecorder>>>()
+                        .expect("No log recorder attached")
+                        .lock()
+                        .await;
+
+                    recorder.record(log);
+                }
+            }
+            
             Ok(response)
         })
     }
