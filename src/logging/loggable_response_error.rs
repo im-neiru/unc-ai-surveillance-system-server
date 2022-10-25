@@ -1,6 +1,8 @@
 use actix_web::http::{StatusCode, header::HeaderValue};
 use chrono::{DateTime, Utc};
 
+use super::LogLevel;
+
 #[derive(Clone, Debug)]
 pub struct LoggableResponseError {
     pub(super) message: (String, String),
@@ -9,16 +11,33 @@ pub struct LoggableResponseError {
     pub(super) timestamp: DateTime<Utc>,
 }
 
+impl LoggableResponseError {
+    #[inline]
+    pub fn new(log_message: &str,
+        response_message: &str,
+        level: LogLevel,
+        status_code: StatusCode) -> Self {
+        Self {
+            message: (log_message.to_owned(), response_message.to_owned()),
+            level,
+            status_code,
+            timestamp: chrono::Utc::now(),
+        }
+    }
+}
+
 impl super::Loggable for LoggableResponseError {   
     #[inline]
     fn message(&self) -> String {
         self.message.0
     }
 
+    #[inline]
     fn level(&self) -> super::LogLevel {
         self.level
     }
 
+    #[inline]
     fn timestamp(&self) -> DateTime<Utc> {
         self.timestamp
     }
