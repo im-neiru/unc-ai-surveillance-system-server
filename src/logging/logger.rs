@@ -56,7 +56,8 @@ where
 
             if let Some(error) = response.response().error() {    
                 if let Some(log) = error.as_error::<super::LoggableResponseError>() {
-                    let recorder = request.app_data::<Data<Mutex<super::LogRecorder>>>()
+                    let mut recorder = response.request()
+                        .app_data::<Data<Mutex<super::LogRecorder>>>()
                         .expect("No log recorder attached")
                         .lock()
                         .await;
