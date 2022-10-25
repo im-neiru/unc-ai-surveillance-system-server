@@ -5,7 +5,7 @@ use jsonwebtoken::{Header, EncodingKey, Validation, DecodingKey};
 use tokio::sync::Mutex;
 use xxhash_rust::xxh3::Xxh3;
 
-use crate::logging::{LoggableResponseError, LogLevel};
+use crate::logging::{LoggableResponseError, LogLevel, LoggedResult};
 use crate::models::{JwtClaims, PasswordHash};
 
 pub struct AppData {
@@ -59,7 +59,7 @@ impl AppData {
         return hash.into();
     }
 
-    pub async fn validate_password(&self, hash: PasswordHash, password: &str) -> Result<(), LoggableResponseError> {
+    pub async fn validate_password(&self, hash: PasswordHash, password: &str) -> LoggedResult<()> {
         if hash == self.argon2(password) {
             return Ok(());
         }
@@ -71,19 +71,36 @@ impl AppData {
             StatusCode::UNAUTHORIZED))
     }
 
-    pub fn jwt_encode(&self, claims: &JwtClaims) -> String {
-        jsonwebtoken::encode(&Header::default(),
-            claims, 
-            &EncodingKey::from_secret(Self::JWT_SECRET.as_ref()))
-            .unwrap()
+    pub fn jwt_encode(&self, claims: &JwtClaims) -> LoggedResult<String> {
+        match jsonwebtoken::encode(&Header::default(),
+        claims, 
+        &EncodingKey::from_secret(Self::JWT_SECRET.as_ref())) {
+            Ok(jwt) => Ok(jwt),
+            Err(err) => Err(LoggableResponseError::new(
+                "Encoding JSON Web token failed",
+                match err.kind() {
+                    jsonwebtoken::errors::ErrorKind::ExpiredSignature => "Session expired",
+                    _ => "Invalid Session",
+                },
+            LogLevel::Information,
+            StatusCode::UNAUTHORIZED))
+        }
     }
 
-    pub fn jwt_decode(&self, jwt: &str) -> JwtClaims {
-        jsonwebtoken::decode(jwt, 
+    pub fn jwt_decode(&self, jwt: &str) -> LoggedResult<JwtClaims> {
+        match jsonwebtoken::decode(jwt, 
             &DecodingKey::from_secret(Self::JWT_SECRET.as_ref()), 
-            &Validation::default())
-            .unwrap()
-            .claims
+            &Validation::default()) {
+            Ok(data) => Ok(data.claims),
+            Err(err) => Err(LoggableResponseError::new(
+                "Decoding JSON Web token failed",
+                match err.kind() {
+                    jsonwebtoken::errors::ErrorKind::ExpiredSignature => "Session expired",
+                    _ => "Invalid Session",
+                },
+            LogLevel::Information,
+            StatusCode::UNAUTHORIZED))
+        }
     }
 
     pub async fn xxh3_128bits<const N: usize>(&self, data: [u8; N]) -> u128 {
