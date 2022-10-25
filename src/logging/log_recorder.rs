@@ -16,7 +16,7 @@ impl LogRecorder {
     }
 
     #[inline]
-    pub fn record<L>(&mut self, log: L) where L: super::Loggable + Sized {
+    pub fn record<L>(&mut self, log: &L) where L: super::Loggable + Sized {
         self.entries.push(LogEntry {
             level: log.level(),
             message: log.message(),
