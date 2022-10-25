@@ -11,3 +11,5 @@ pub use loggable::Loggable;
 pub use log_recorder::LogRecorder;
 pub use loggable_response_error::LoggableResponseError;
 pub use server_error::ServerError;
+
+pub type LoggedResult<R, E: Loggable = LoggableResponseError> = Result<R, E>;
