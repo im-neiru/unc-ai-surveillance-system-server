@@ -65,7 +65,7 @@ impl AppData {
         }
 
         Err(LoggableResponseError::new(
-            "A user has entered invalid password",
+            "A user entered invalid password",
             "Invalid username or password",
             LogLevel::Information,
             StatusCode::UNAUTHORIZED))

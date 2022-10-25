@@ -42,7 +42,7 @@ impl UserSelect {
         .first::<Self>(connection).optional() {
             Ok(Some(user)) => Ok(user),
             Ok(None) => Err(LoggableResponseError::new(
-                "A user enter incorrect username",
+                "A user entered incorrect username",
                 "Invalid username or password",
                 LogLevel::Error,
                 StatusCode::INTERNAL_SERVER_ERROR,
