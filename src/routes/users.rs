@@ -10,7 +10,7 @@ use serde::{Serialize, Deserialize};
 use serde_json::json;
 
 use crate::data::AppData;
-use crate::logging::{LoggedResult, LoggableResponseError, LogLevel};
+use crate::logging::{LogResult, LoggableResponseError, LogLevel};
 use crate::models::{UserSelect, DeviceSignature, DeviceOs, JwtClaims, SessionInsert, UserClaims};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -23,7 +23,7 @@ struct LoginData {
 }
 
 #[post("/login")]
-async fn post_login((body, state): (web::Json<LoginData>, web::Data<AppData>)) -> LoggedResult<impl Responder> {
+async fn post_login((body, state): (web::Json<LoginData>, web::Data<AppData>)) -> LogResult<impl Responder> {
     let mut database = state.connect_database();
     let user = UserSelect::select_by_username(&mut database, &body.username)?;
 
@@ -42,7 +42,7 @@ async fn post_login((body, state): (web::Json<LoginData>, web::Data<AppData>)) -
 async fn create_session(state: web::Data<AppData>,
     database: &mut PooledConnection<ConnectionManager<PgConnection>>,
     login_data: &LoginData,
-    user: UserSelect) -> LoggedResult<String> {
+    user: UserSelect) -> LogResult<String> {
 
 
     let dev_hash = state.xxh3_128bits(login_data.device_signature.into()).await.to_ne_bytes();
@@ -70,7 +70,7 @@ async fn create_session(state: web::Data<AppData>,
 }
 
 #[actix_web::get("/info")]
-async fn get_info((state, user): (web::Data<AppData>, UserClaims)) -> LoggedResult<impl Responder> {
+async fn get_info((state, user): (web::Data<AppData>, UserClaims)) -> LogResult<impl Responder> {
     use crate::schema::users;
 
     println!("Info test");

@@ -5,7 +5,7 @@ use jsonwebtoken::{Header, EncodingKey, Validation, DecodingKey};
 use tokio::sync::Mutex;
 use xxhash_rust::xxh3::Xxh3;
 
-use crate::logging::{LoggableResponseError, LogLevel, LoggedResult};
+use crate::logging::{LoggableResponseError, LogLevel, LogResult};
 use crate::models::{JwtClaims, PasswordHash};
 
 pub struct AppData {
@@ -59,7 +59,7 @@ impl AppData {
         return hash.into();
     }
 
-    pub async fn validate_password(&self, hash: PasswordHash, password: &str) -> LoggedResult<()> {
+    pub async fn validate_password(&self, hash: PasswordHash, password: &str) -> LogResult<()> {
         if hash == self.argon2(password) {
             return Ok(());
         }
@@ -71,7 +71,7 @@ impl AppData {
             StatusCode::UNAUTHORIZED))
     }
 
-    pub fn jwt_encode(&self, claims: &JwtClaims) -> LoggedResult<String> {
+    pub fn jwt_encode(&self, claims: &JwtClaims) -> LogResult<String> {
         match jsonwebtoken::encode(&Header::default(),
         claims, 
         &EncodingKey::from_secret(Self::JWT_SECRET.as_ref())) {
@@ -87,7 +87,7 @@ impl AppData {
         }
     }
 
-    pub fn jwt_decode(&self, jwt: &str) -> LoggedResult<JwtClaims> {
+    pub fn jwt_decode(&self, jwt: &str) -> LogResult<JwtClaims> {
         match jsonwebtoken::decode(jwt, 
             &DecodingKey::from_secret(Self::JWT_SECRET.as_ref()), 
             &Validation::default()) {
