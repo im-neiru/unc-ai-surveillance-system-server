@@ -32,7 +32,7 @@ async fn get_entries((records, user, request): (web::Data<Mutex<LogRecorder>>, U
             .await
             .retrieve(request.index, request.length)
             .customize()
-            .append_header(("Content-Type", "application/json"))
+            .insert_header(("Content-Type", "application/json"))
             .with_status(StatusCode::OK)
     )
 }
