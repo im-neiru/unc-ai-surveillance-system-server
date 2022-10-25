@@ -4,16 +4,14 @@ use actix_web::Responder;
 
 use chrono::Utc;
 use diesel::r2d2::{PooledConnection, ConnectionManager};
-use diesel::{QueryDsl, RunQueryDsl, PgConnection};
-use diesel::ExpressionMethods;
+use diesel::{QueryDsl, RunQueryDsl, PgConnection, ExpressionMethods, OptionalExtension};
 
 use serde::{Serialize, Deserialize};
 use serde_json::json;
 
 use crate::data::AppData;
-use crate::logging::{LogWriter, LogLevel, LoggedResult, LoggableWithResponse};
+use crate::logging::{LoggedResult, LoggableResponseError, LogLevel};
 use crate::models::{UserSelect, DeviceSignature, DeviceOs, JwtClaims, SessionInsert, UserClaims};
-use crate::try_log;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct LoginData {
@@ -25,15 +23,12 @@ struct LoginData {
 }
 
 #[post("/login")]
-async fn post_login((body, state, mut log_info): 
-(web::Json<LoginData>, web::Data<AppData>, LogWriter<{ LogLevel::Information }>)) -> LoggedResult<impl Responder> {
+async fn post_login((body, state): (web::Json<LoginData>, web::Data<AppData>)) -> LoggedResult<impl Responder> {
     let mut database = state.connect_database();
-    let jwt;
-    let user = try_log!(UserSelect::select_by_username(&mut database, &body.username), &mut log_info);
-    
-    try_log!(state.validate_password(user.password_hash, &body.password).await, &mut log_info);
+    let user = UserSelect::select_by_username(&mut database, &body.username)?;
 
-    jwt = create_session(state, &mut database, &body, user).await;
+    state.validate_password(user.password_hash, &body.password).await?;
+    let jwt = create_session(state, &mut database, &body, user).await;
 
     Ok(json!({
         "jwt": jwt
@@ -75,8 +70,10 @@ async fn create_session(state: web::Data<AppData>,
 }
 
 #[actix_web::get("/info")]
-async fn get_info((state, user, mut log_info): (web::Data<AppData>, UserClaims, LogWriter<{ LogLevel::Information}>)) -> LoggedResult<impl Responder> {
+async fn get_info((state, user): (web::Data<AppData>, UserClaims)) -> LoggedResult<impl Responder> {
     use crate::schema::users;
+
+    println!("Info test");
 
     let database = &mut *state.connect_database();
     let (username, last_name, first_name) = match users::table.select((
@@ -84,13 +81,19 @@ async fn get_info((state, user, mut log_info): (web::Data<AppData>, UserClaims, 
         users::first_name,
         users::last_name,
     )).filter(users::id.eq(user.id))
-    .first::<(String, String, String)>(database) {
-        Ok(val) => val,
-        Err(_) => return LoggableWithResponse::new(
+    .first::<(String, String, String)>(database)
+    .optional() {
+        Ok(Some(val)) => val,
+        Ok(None) => return Err(LoggableResponseError::new(
             "Unable to retrieve user data",
             "Unable to retrieve data",
-            StatusCode::INTERNAL_SERVER_ERROR)
-            .log(&mut log_info).await,
+            LogLevel::Error,
+            StatusCode::INTERNAL_SERVER_ERROR)),
+        Err(_) => return Err(LoggableResponseError::new(
+            "Unable to retrieve user data",
+            "Unable to retrieve data",
+            LogLevel::Error,
+            StatusCode::INTERNAL_SERVER_ERROR))
     };
     
     Ok(json!({
