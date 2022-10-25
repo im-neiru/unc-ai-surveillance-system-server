@@ -38,6 +38,7 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
         App::new()
             .app_data(data.clone())
             .app_data(logger.clone())
+            .wrap(logging::LogMiddleware)
             .service(routes::users::scope())
     })
     .bind(server_config.web_server.clone())?

@@ -5,7 +5,7 @@ mod log_level;
 mod loggable_response_error;
 mod server_error;
 
-pub use logger::Logger;
+pub use logger::Logger as LogMiddleware;
 pub use log_level::LogLevel;
 pub use loggable::Loggable;
 pub use log_recorder::LogRecorder;
