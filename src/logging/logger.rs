@@ -62,7 +62,7 @@ where
                         .lock()
                         .await;
 
-                    recorder.record(log);
+                    recorder.record(log, Some(response.request().path()));
                 }
             }
             
