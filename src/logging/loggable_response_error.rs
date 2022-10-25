@@ -7,3 +7,18 @@ pub struct LoggableResponseError {
     pub(super) status_code: StatusCode,
     pub(super) timestamp: DateTime<Utc>,
 }
+
+impl super::Loggable for LoggableResponseError {   
+    #[inline]
+    fn message(&self) -> String {
+        self.message.0
+    }
+
+    fn level(&self) -> super::LogLevel {
+        self.level
+    }
+
+    fn timestamp(&self) -> DateTime<Utc> {
+        self.timestamp
+    }
+}
