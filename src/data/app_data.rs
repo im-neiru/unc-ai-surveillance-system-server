@@ -5,7 +5,7 @@ use jsonwebtoken::{Header, EncodingKey, Validation, DecodingKey};
 use tokio::sync::Mutex;
 use xxhash_rust::xxh3::Xxh3;
 
-use crate::logging::LoggableWithResponse;
+use crate::logging::{LoggableResponseError, LogLevel};
 use crate::models::{JwtClaims, PasswordHash};
 
 pub struct AppData {
@@ -59,14 +59,15 @@ impl AppData {
         return hash.into();
     }
 
-    pub async fn validate_password(&self, hash: PasswordHash, password: &str) -> Result<(), LoggableWithResponse> {
+    pub async fn validate_password(&self, hash: PasswordHash, password: &str) -> Result<(), LoggableResponseError> {
         if hash == self.argon2(password) {
             return Ok(());
         }
 
-        Err(LoggableWithResponse::new(
+        Err(LoggableResponseError::new(
             "A user has entered invalid password",
             "Invalid username or password",
+            LogLevel::Information,
             StatusCode::UNAUTHORIZED))
     }
 
