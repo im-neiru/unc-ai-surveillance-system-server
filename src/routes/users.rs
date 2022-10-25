@@ -28,7 +28,7 @@ async fn post_login((body, state): (web::Json<LoginData>, web::Data<AppData>)) -
     let user = UserSelect::select_by_username(&mut database, &body.username)?;
 
     state.validate_password(user.password_hash, &body.password).await?;
-    let jwt = create_session(state, &mut database, &body, user).await;
+    let jwt = create_session(state, &mut database, &body, user).await?;
 
     Ok(json!({
         "jwt": jwt
@@ -42,7 +42,7 @@ async fn post_login((body, state): (web::Json<LoginData>, web::Data<AppData>)) -
 async fn create_session(state: web::Data<AppData>,
     database: &mut PooledConnection<ConnectionManager<PgConnection>>,
     login_data: &LoginData,
-    user: UserSelect) -> String {
+    user: UserSelect) -> LoggedResult<String> {
 
 
     let dev_hash = state.xxh3_128bits(login_data.device_signature.into()).await.to_ne_bytes();
@@ -66,7 +66,7 @@ async fn create_session(state: web::Data<AppData>,
         .unwrap()
     };
 
-    state.jwt_encode(&JwtClaims::new(session_id) )
+    Ok(state.jwt_encode(&JwtClaims::new(session_id) )?)
 }
 
 #[actix_web::get("/info")]
