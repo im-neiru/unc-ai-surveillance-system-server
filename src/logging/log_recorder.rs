@@ -1,5 +1,3 @@
-use chrono::TimeZone;
-
 pub struct LogRecorder {
     entries: Vec<LogEntry>
 }
