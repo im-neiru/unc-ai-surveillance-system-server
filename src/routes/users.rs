@@ -73,8 +73,6 @@ async fn create_session(state: web::Data<AppData>,
 async fn get_info((state, user): (web::Data<AppData>, UserClaims)) -> LogResult<impl Responder> {
     use crate::schema::users;
 
-    println!("Info test");
-
     let database = &mut *state.connect_database();
     let (username, last_name, first_name) = match users::table.select((
         users::username,
