@@ -20,3 +20,4 @@ jsonwebtoken = "8.1.1"
 seq-macro = "0.3"
 xxhash-rust = { version = "0.8.6", features = ["xxh3"] }
 aes-gcm = "0.10.1"
+nokhwa = "0.10.2"
