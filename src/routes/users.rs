@@ -17,8 +17,11 @@ use crate::models::{UserSelect, DeviceSignature, DeviceOs, JwtClaims, SessionIns
 struct LoginData {
     pub username: String,
     pub password: String,
+    #[serde(alias = "device-os")]
     pub device_os: DeviceOs,
+    #[serde(alias = "device-name")]
     pub device_name: String,
+    #[serde(alias = "device-signature")]
     pub device_signature: DeviceSignature,
 }
 
@@ -46,7 +49,7 @@ async fn create_session(state: web::Data<AppData>,
 
 
     let dev_hash = state.xxh3_128bits(login_data.device_signature.into()).await.to_ne_bytes();
-    
+
     let session_id = {
         use crate::schema::sessions::dsl::*;
         let record = SessionInsert::create(
@@ -93,10 +96,10 @@ async fn get_info((state, user): (web::Data<AppData>, UserClaims)) -> LogResult<
             LogLevel::Error,
             StatusCode::INTERNAL_SERVER_ERROR))
     };
-    
+
     Ok(json!({
         "username": username,
-        "firstname": first_name, 
+        "firstname": first_name,
         "last_name": last_name,
     })
     .to_string()
