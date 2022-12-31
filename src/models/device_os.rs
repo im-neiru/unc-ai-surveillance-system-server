@@ -10,8 +10,11 @@ use diesel:: sql_types::SmallInt;
 #[derive(AsExpression)]
 #[diesel(sql_type = SmallInt)]
 pub enum DeviceOs {
+    #[serde(alias = "android")]
     Android = 1,
+    #[serde(alias = "windows")]
     Windows = 2,
+    #[serde(alias = "linux")]
     Linux = 3,
 }
 
