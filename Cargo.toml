@@ -21,4 +21,4 @@ seq-macro = "0.3"
 xxhash-rust = { version = "0.8.6", features = ["xxh3"] }
 aes-gcm = "0.10.1"
 nokhwa = "0.10.2"
-webrtc = "0.6.0"
+s2n-quic = "1.14.0"
