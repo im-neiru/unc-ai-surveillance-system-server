@@ -98,9 +98,10 @@ async fn get_info((state, user): (web::Data<AppData>, UserClaims)) -> LogResult<
     };
 
     Ok(json!({
+        "id": user.id,
         "username": username,
-        "firstname": first_name,
-        "last_name": last_name,
+        "first-name": first_name,
+        "last-name": last_name,
     })
     .to_string()
     .customize()
