@@ -39,7 +39,7 @@ impl VideoManager {
 
         self.cameras.insert(id, {
             let requested
-                = RequestedFormat::new::<RgbFormat>(RequestedFormatType::AbsoluteHighestFrameRate);
+                = RequestedFormat::new::<RgbFormat>(RequestedFormatType::AbsoluteHighestResolution);
             Camera::new(index, requested).ok()
             .ok_or( LoggableResponseError::new(
             "Unable to create camera",
@@ -49,6 +49,10 @@ impl VideoManager {
         });
 
         Ok(id)
+    }
+
+    pub fn camera(&mut self, id: CameraId) -> Option<&mut Camera> {
+        self.cameras.get_mut(&id)
     }
 }
 
