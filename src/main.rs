@@ -10,6 +10,7 @@ mod models;
 mod schema;
 mod traits;
 mod logging;
+mod media;
 
 #[cfg(test)]
 mod tests;
