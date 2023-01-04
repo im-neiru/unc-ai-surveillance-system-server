@@ -1,6 +1,6 @@
-mod video_manager;
+mod surveillance;
 mod camera;
 
-pub use video_manager::VideoManager;
-pub use video_manager::CameraId;
+pub use surveillance::Surveillance;
+pub use surveillance::CameraId;
 pub use camera::Camera;

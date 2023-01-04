@@ -11,12 +11,12 @@ use ring::rand::{ SystemRandom, SecureRandom };
 use crate::logging::{ LogResult, LoggableResponseError };
 use actix_web::http::StatusCode;
 
-pub struct VideoManager {
+pub struct Surveillance {
     cameras: HashMap<CameraId, super::Camera, BuildCameraIdHasher>,
     rng: SystemRandom
 }
 
-impl VideoManager {
+impl Surveillance {
     pub fn new() -> Self {
         Self {
             cameras: HashMap::with_hasher(BuildCameraIdHasher),
