@@ -1,13 +1,3 @@
-use nokhwa::{
-    Camera,
-    utils::{
-        CameraIndex,
-        RequestedFormat,
-        RequestedFormatType
-    },
-    pixel_format::RgbFormat
-};
-
 use std::{
     collections::{
         HashMap,
@@ -22,7 +12,7 @@ use crate::logging::{ LogResult, LoggableResponseError };
 use actix_web::http::StatusCode;
 
 pub struct VideoManager {
-    cameras: HashMap<CameraId, Camera, BuildCameraIdHasher>,
+    cameras: HashMap<CameraId, super::Camera, BuildCameraIdHasher>,
     rng: SystemRandom
 }
 
@@ -34,24 +24,14 @@ impl VideoManager {
         }
     }
 
-    pub fn add_camera(&mut self, index: CameraIndex) -> LogResult<CameraId> {
+    pub fn add_camera(&mut self, source: impl super::camera::CameraSource) -> LogResult<CameraId> {
         let id = CameraId::new_unique(self.cameras.keys(), &mut self.rng)?;
-
-        self.cameras.insert(id, {
-            let requested
-                = RequestedFormat::new::<RgbFormat>(RequestedFormatType::AbsoluteHighestResolution);
-            Camera::new(index, requested).ok()
-            .ok_or( LoggableResponseError::new(
-            "Unable to create camera",
-            "Camera error",
-            crate::logging::LogLevel::Trace,
-            StatusCode::INTERNAL_SERVER_ERROR))?
-        });
+        self.cameras.insert(id, super::Camera::connect(source)?);
 
         Ok(id)
     }
 
-    pub fn camera(&mut self, id: CameraId) -> Option<&mut Camera> {
+    pub fn camera(&mut self, id: CameraId) -> Option<&mut super::Camera> {
         self.cameras.get_mut(&id)
     }
 }
@@ -68,8 +48,8 @@ impl CameraId {
         'outer: loop {
             if rng.fill(&mut buffer).is_err() {
                 return Err(LoggableResponseError::new(
-                    "Unable to create camera",
-                    "Camera error",
+                    "Unable to generate camera ID",
+                    "Camera related error",
                     crate::logging::LogLevel::Trace,
                 StatusCode::INTERNAL_SERVER_ERROR));
             }
