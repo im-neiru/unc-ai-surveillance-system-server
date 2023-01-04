@@ -14,19 +14,14 @@ impl Camera {
         source.new_camera()
     }
 
-    pub fn frame(&mut self) -> LogResult<Mat> {
+    pub fn frame(&mut self) -> LogResult<Option<Mat>> {
         let mut buffer = Mat::default();
 
         if self.0.read(&mut buffer)? {
-            return Ok(buffer);
+            return Ok(Some(buffer));
         }
 
-        Err(crate::logging::LoggableResponseError::new(
-            "OpenCV: no frames found",
-            "Camera related error",
-            crate::logging::LogLevel::Trace,
-            actix_web::http::StatusCode::INTERNAL_SERVER_ERROR
-        ))
+        Ok(None)
     }
 }
 
