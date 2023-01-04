@@ -13,12 +13,12 @@ pub struct LoggableResponseError {
 
 impl LoggableResponseError {
     #[inline]
-    pub fn new(log_message: &str,
-        response_message: &str,
+    pub fn new(log_message: impl Into<String>,
+        response_message: impl Into<String>,
         level: LogLevel,
         status_code: StatusCode) -> Self {
         Self {
-            message: (log_message.to_owned(), response_message.to_owned()),
+            message: (log_message.into(), response_message.into()),
             level,
             status_code,
             timestamp: chrono::Utc::now(),
@@ -26,7 +26,7 @@ impl LoggableResponseError {
     }
 }
 
-impl super::Loggable for LoggableResponseError {   
+impl super::Loggable for LoggableResponseError {
     #[inline]
     fn message<'a>(&'a self) -> &'a str {
         self.message.0.as_str()
@@ -52,7 +52,7 @@ impl actix_web::ResponseError for LoggableResponseError {
         let mut res = actix_web::HttpResponse::new(self.status_code());
 
         res.headers_mut()
-            .insert(actix_web::http::header::CONTENT_TYPE, 
+            .insert(actix_web::http::header::CONTENT_TYPE,
                 HeaderValue::from_static("application/json"));
 
         res.set_body(actix_web::body::BoxBody::new(
@@ -66,5 +66,16 @@ impl actix_web::ResponseError for LoggableResponseError {
 impl std::fmt::Display for LoggableResponseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.message.0)
+    }
+}
+
+impl From<opencv::Error> for LoggableResponseError {
+    fn from(value: opencv::Error) -> Self {
+        Self::new(
+            &format!("OpenCV Error: {}:{}", value.code, value.message),
+            "Video related error",
+            LogLevel::Trace,
+            StatusCode::INTERNAL_SERVER_ERROR
+        )
     }
 }
