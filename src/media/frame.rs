@@ -18,7 +18,10 @@ use opencv::{
     imgproc,
 };
 
-use std::ops::{ Index, IndexMut };
+use std::{
+    ops::{ Index, IndexMut },
+    fmt::{ Display, Debug, Formatter },
+};
 
 use crate::logging::LogResult;
 
@@ -96,5 +99,18 @@ impl ToInputArray for Frame {
 impl ToInputOutputArray for Frame {
     fn input_output_array(&mut self) -> opencv::Result<_InputOutputArray> {
             _InputOutputArray::from_mat_mut(&mut self.0)
+    }
+}
+
+impl Display for Color {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(&mut f, "{}, {}, {}", self.r, self.g, self.b)
+    }
+}
+
+impl Debug for Color {
+    #[inline]
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self, f)
     }
 }
