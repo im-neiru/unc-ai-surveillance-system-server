@@ -8,12 +8,14 @@ use opencv::{
         _InputArray,
         _InputOutputArray,
         Point3_,
+        Size,
         CV_8UC3,
     },
     prelude::{
         MatTraitConst,
         MatTrait,
-    }
+    },
+    imgproc,
 };
 
 use std::ops::{ Index, IndexMut };
@@ -42,6 +44,18 @@ impl Frame {
 
     pub fn height(&self) -> u32 {
         self.0.rows() as u32
+    }
+
+    pub fn resize(&self, width: u32, height: u32) -> LogResult<Self> {
+        let mut buffer = Mat::default();
+
+        imgproc::resize(&self.0,
+            &mut buffer,
+            Size::new(width as i32, height as i32),
+            0.0, 0.0,
+            imgproc::INTER_LINEAR)?;
+
+        Ok(Self(buffer))
     }
 }
 
