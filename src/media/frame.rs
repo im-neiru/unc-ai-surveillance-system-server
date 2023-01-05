@@ -104,7 +104,7 @@ impl ToInputOutputArray for Frame {
 
 impl Display for Color {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(&mut f, "{}, {}, {}", self.r, self.g, self.b)
+        write!(f, "{}, {}, {}", self.r, self.g, self.b)
     }
 }
 
