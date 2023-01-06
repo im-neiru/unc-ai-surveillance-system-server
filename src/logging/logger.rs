@@ -54,8 +54,8 @@ where
         Box::pin(async move {
             let response = future.await?;
 
-            if let Some(error) = response.response().error() {    
-                if let Some(log) = error.as_error::<super::LoggableResponseError>() {
+            if let Some(error) = response.response().error() {
+                if let Some(log) = error.as_error::<super::ResponseError>() {
                     let mut recorder = response.request()
                         .app_data::<Data<Mutex<super::LogRecorder>>>()
                         .expect("No log recorder attached")
@@ -65,7 +65,7 @@ where
                     recorder.record(log, Some(response.request().path()));
                 }
             }
-            
+
             Ok(response)
         })
     }
