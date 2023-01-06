@@ -34,6 +34,10 @@ impl Surveillance {
     pub fn camera(&mut self, id: CameraId) -> Option<&mut super::Camera> {
         self.cameras.get_mut(&id)
     }
+
+    pub fn iter<'a>(&'a self) -> std::collections::hash_map::Iter<'a, CameraId, super::Camera> {
+        self.cameras.iter()
+    }
 }
 
 #[derive(Clone, Copy)]
