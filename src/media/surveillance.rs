@@ -3,7 +3,8 @@ use std::{
         HashMap,
         hash_map::DefaultHasher,
     },
-    hash::{ Hash, Hasher }
+    hash::{ Hash, Hasher },
+    fmt::{ Display, Debug, Formatter }
 };
 
 use ring::rand::{ SystemRandom, SecureRandom };
@@ -69,6 +70,20 @@ impl CameraId {
 
             return Ok(CameraId(id_u32));
         }
+    }
+}
+
+impl Display for CameraId {
+    #[inline]
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self.0, f)
+    }
+}
+
+impl Debug for CameraId {
+    #[inline]
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self.0, f)
     }
 }
 
