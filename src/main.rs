@@ -31,11 +31,21 @@ fn main() -> std::io::Result<()> {
 async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     let data = actix_web::web::Data::new(AppData::create(&server_config.database_url));
     let logger = actix_web::web::Data::new(Mutex::new(LogRecorder::new()));
+    let surveillance = actix_web::web::Data::new({
+        let mut inner = media::Surveillance::new();
+        match inner.add_camera(1u32) {
+            Err(error) => logger.lock().await.record(&error, None),
+            _ => (),
+        }
+
+        inner
+    });
 
     HttpServer::new(move || {
         App::new()
             .app_data(data.clone())
             .app_data(logger.clone())
+            .app_data(surveillance.clone())
             .wrap(logging::LogMiddleware)
             .service(routes::users::scope())
             .service(routes::logs::scope())
