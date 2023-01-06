@@ -6,8 +6,8 @@ use actix_web::Responder;
 
 use serde::{Serialize, Deserialize};
 
-use crate::logging::{LogResult, LoggableResponseError, LogLevel, LogRecorder};
-use crate::models::{UserClaims, UserRole};
+use crate::logging::{ ResponseError, LogLevel, LogRecorder };
+use crate::models::{ UserClaims, UserRole };
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct LogRequest {
@@ -16,17 +16,17 @@ struct LogRequest {
 }
 
 #[get("/entries")]
-async fn get_entries((records, user, request): (web::Data<Mutex<LogRecorder>>, UserClaims, web::Json<LogRequest>)) -> LogResult<impl Responder> {
+async fn get_entries((records, user, request): (web::Data<Mutex<LogRecorder>>, UserClaims, web::Json<LogRequest>)) -> super::Result<impl Responder> {
     if user.assigned_role != UserRole::SystemAdmin {
         return Err(
-            LoggableResponseError::new(
-                "Non administrator trying to access logs", 
+            ResponseError::new(
+                "Non administrator trying to access logs",
                 "Not accessable for non administrator",
                 LogLevel::Information,
                 StatusCode::UNAUTHORIZED)
         );
     }
-    
+
     Ok(
         records.lock()
             .await

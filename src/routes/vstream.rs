@@ -6,13 +6,10 @@ use actix_web::{
 
 use crate::traits::WithSeperator;
 
-use crate::{
-    logging::LogResult,
-    media::Surveillance
-};
+use crate::media::Surveillance;
 
 #[actix_web::get("/cameras")]
-async fn get_cameras(surveillance: web::Data<Surveillance>) -> LogResult<impl Responder> {
+async fn get_cameras(surveillance: web::Data<Surveillance>) -> super::Result<impl Responder> {
     Ok(format!("cameras: [{}]", surveillance.iter()
     .map(|(id, _camera)| {
         //TODO: retrieve camera name

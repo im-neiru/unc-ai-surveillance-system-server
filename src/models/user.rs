@@ -9,7 +9,7 @@ use diesel::{
     ExpressionMethods, OptionalExtension
 };
 
-use crate::logging::{LoggableResponseError, LogLevel};
+use crate::logging::{ ResponseError, LogLevel };
 
 use super::{PasswordHash, UserRole};
 
@@ -35,19 +35,19 @@ pub struct UserSelect {
 }
 
 impl UserSelect {
-    pub fn select_by_username(connection: &mut PgConnection, username: &str) -> Result<Self, LoggableResponseError> {
+    pub fn select_by_username(connection: &mut PgConnection, username: &str) -> Result<Self, ResponseError> {
         use crate::schema::users::dsl;
 
         match dsl::users.filter(dsl::username.eq(username))
         .first::<Self>(connection).optional() {
             Ok(Some(user)) => Ok(user),
-            Ok(None) => Err(LoggableResponseError::new(
+            Ok(None) => Err(ResponseError::new(
                 "A user entered incorrect username",
                 "Invalid username or password",
                 LogLevel::Error,
                 StatusCode::INTERNAL_SERVER_ERROR,
             )),
-            Err(err) => Err(LoggableResponseError::new(
+            Err(err) => Err(ResponseError::new(
                 err.to_string().as_str(),
                 "Failed to retrieved data",
                 LogLevel::Error,

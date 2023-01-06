@@ -9,7 +9,7 @@ use opencv::{
 };
 use tokio::sync::Mutex;
 
-use crate::logging::LogResult;
+//use crate::logging::Result;
 
 pub struct Camera(Mutex<VideoCapture>);
 
@@ -20,11 +20,11 @@ pub struct CameraReader<'a,> {
 
 impl Camera {
     #[inline]
-    pub fn connect(source: impl CameraSource) -> LogResult<Self> {
+    pub fn connect(source: impl CameraSource) -> crate::Result<Self> {
         source.new_camera()
     }
 
-    pub async fn begin(&mut self) -> LogResult<CameraReader> {
+    pub async fn begin(&mut self) -> crate::Result<CameraReader> {
         let w; let h;
 
         {
@@ -42,11 +42,11 @@ impl Camera {
 }
 
 pub trait CameraSource {
-    fn new_camera(&self) -> crate::logging::LogResult<Camera>;
+    fn new_camera(&self) -> crate::Result<Camera>;
 }
 
 impl CameraSource for &str {
-    fn new_camera(&self) -> crate::logging::LogResult<Camera> {
+    fn new_camera(&self) -> crate::Result<Camera> {
         Ok(Camera(Mutex::const_new(VideoCapture::from_file(
             self,
             opencv::videoio::CAP_ANY)?)))
@@ -54,7 +54,7 @@ impl CameraSource for &str {
 }
 
 impl CameraSource for String {
-    fn new_camera(&self) -> LogResult<Camera> {
+    fn new_camera(&self) -> crate::Result<Camera> {
         Ok(Camera(Mutex::const_new(VideoCapture::from_file(
             self,
             opencv::videoio::CAP_ANY)?)))
@@ -62,7 +62,7 @@ impl CameraSource for String {
 }
 
 impl CameraSource for u32 {
-    fn new_camera(&self) -> LogResult<Camera> {
+    fn new_camera(&self) -> crate::Result<Camera> {
         Ok(Camera(Mutex::const_new(VideoCapture::new(
             *self as i32,
             opencv::videoio::CAP_ANY)?)))
@@ -70,7 +70,7 @@ impl CameraSource for u32 {
 }
 
 impl<'a, 'b> CameraReader<'a> {
-    pub async fn next(&'b mut self) -> Option<LogResult<&'b super::Frame>> {
+    pub async fn next(&'b mut self) -> Option<crate::Result<&'b super::Frame>> {
         let mut vc = self.camera.0.lock().await;
 
         match vc.read(&mut self.buffer) {

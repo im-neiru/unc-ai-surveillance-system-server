@@ -10,8 +10,15 @@ use serde::{Serialize, Deserialize};
 use serde_json::json;
 
 use crate::data::AppData;
-use crate::logging::{LogResult, LoggableResponseError, LogLevel};
-use crate::models::{UserSelect, DeviceSignature, DeviceOs, JwtClaims, SessionInsert, UserClaims};
+use crate::logging::{ ResponseError, LogLevel };
+use crate::models::{
+    UserSelect,
+    DeviceSignature,
+    DeviceOs,
+    JwtClaims,
+    SessionInsert,
+    UserClaims
+};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct LoginData {
@@ -26,7 +33,7 @@ struct LoginData {
 }
 
 #[post("/login")]
-async fn post_login((body, state): (web::Json<LoginData>, web::Data<AppData>)) -> LogResult<impl Responder> {
+async fn post_login((body, state): (web::Json<LoginData>, web::Data<AppData>)) -> super::Result<impl Responder> {
     let mut database = state.connect_database();
     let user = UserSelect::select_by_username(&mut database, &body.username)?;
 
@@ -45,7 +52,7 @@ async fn post_login((body, state): (web::Json<LoginData>, web::Data<AppData>)) -
 async fn create_session(state: web::Data<AppData>,
     database: &mut PooledConnection<ConnectionManager<PgConnection>>,
     login_data: &LoginData,
-    user: UserSelect) -> LogResult<String> {
+    user: UserSelect) -> super::Result<String> {
 
 
     let dev_hash = state.xxh3_128bits(login_data.device_signature.into()).await.to_ne_bytes();
@@ -73,7 +80,7 @@ async fn create_session(state: web::Data<AppData>,
 }
 
 #[actix_web::get("/info")]
-async fn get_info((state, user): (web::Data<AppData>, UserClaims)) -> LogResult<impl Responder> {
+async fn get_info((state, user): (web::Data<AppData>, UserClaims)) -> super::Result<impl Responder> {
     use crate::schema::users;
 
     let database = &mut *state.connect_database();
@@ -85,12 +92,12 @@ async fn get_info((state, user): (web::Data<AppData>, UserClaims)) -> LogResult<
     .first::<(String, String, String)>(database)
     .optional() {
         Ok(Some(val)) => val,
-        Ok(None) => return Err(LoggableResponseError::new(
+        Ok(None) => return Err(ResponseError::new(
             "Unable to retrieve user data",
             "Unable to retrieve data",
             LogLevel::Error,
             StatusCode::INTERNAL_SERVER_ERROR)),
-        Err(_) => return Err(LoggableResponseError::new(
+        Err(_) => return Err(ResponseError::new(
             "Unable to retrieve user data",
             "Unable to retrieve data",
             LogLevel::Error,
