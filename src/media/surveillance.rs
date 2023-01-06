@@ -9,8 +9,9 @@ use std::{
 
 use ring::rand::{ SystemRandom, SecureRandom };
 
-use crate::logging::{ LogResult, LoggableResponseError };
 use actix_web::http::StatusCode;
+
+use crate::logging::LoggableError;
 
 pub struct Surveillance {
     cameras: HashMap<CameraId, super::Camera, BuildCameraIdHasher>,
@@ -25,7 +26,7 @@ impl Surveillance {
         }
     }
 
-    pub fn add_camera(&mut self, source: impl super::camera::CameraSource) -> LogResult<CameraId> {
+    pub fn add_camera(&mut self, source: impl super::camera::CameraSource) -> crate::Result<CameraId> {
         let id = CameraId::new_unique(self.cameras.keys(), &mut self.rng)?;
         self.cameras.insert(id, super::Camera::connect(source)?);
 
@@ -46,17 +47,15 @@ impl Surveillance {
 pub struct CameraId(u32);
 
 impl CameraId {
-    fn new_unique<'a>(lookup: impl Iterator<Item = &'a CameraId> + Clone, rng: &mut SystemRandom) -> LogResult<CameraId> {
+    fn new_unique<'a>(lookup: impl Iterator<Item = &'a CameraId> + Clone, rng: &mut SystemRandom) -> crate::Result<CameraId> {
         let mut buffer = [0u8; 4];
         let mut id_u32;
 
         'outer: loop {
             if rng.fill(&mut buffer).is_err() {
-                return Err(LoggableResponseError::new(
+                return Err(LoggableError::new(
                     "Unable to generate camera ID",
-                    "Camera related error",
-                    crate::logging::LogLevel::Trace,
-                StatusCode::INTERNAL_SERVER_ERROR));
+                    crate::logging::LogLevel::Trace));
             }
 
             id_u32 = u32::from_le_bytes(buffer);

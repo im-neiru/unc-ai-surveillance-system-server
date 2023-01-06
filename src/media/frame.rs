@@ -23,7 +23,6 @@ use std::{
     fmt::{ Display, Debug, Formatter },
 };
 
-use crate::logging::LogResult;
 
 pub struct Frame(Mat);
 
@@ -35,7 +34,7 @@ pub struct Color {
 }
 
 impl Frame {
-    pub fn new(width: u32, height: u32) -> LogResult<Self> {
+    pub fn new(width: u32, height: u32) -> crate::Result<Self> {
         Ok(Self(unsafe {
             Mat::new_rows_cols(height as i32, width as i32, CV_8UC3)?
         }))
@@ -49,7 +48,7 @@ impl Frame {
         self.0.rows() as u32
     }
 
-    pub fn resize(&self, width: u32, height: u32) -> LogResult<Self> {
+    pub fn resize(&self, width: u32, height: u32) -> crate::Result<Self> {
         let mut buffer = Mat::default();
 
         imgproc::resize(&self.0,

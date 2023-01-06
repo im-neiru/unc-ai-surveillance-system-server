@@ -5,8 +5,8 @@ use jsonwebtoken::{ Header, EncodingKey, Validation, DecodingKey };
 use tokio::sync::Mutex;
 use xxhash_rust::xxh3::Xxh3;
 
-use crate::logging::{ LoggableResponseError, LogLevel, LogResult };
-use crate::models::{ JwtClaims, PasswordHash};
+use crate::logging::{ ResponseError, LogLevel };
+use crate::models::{ JwtClaims, PasswordHash };
 
 pub struct AppData {
     db_pool: Pool<ConnectionManager<PgConnection>>,
@@ -34,6 +34,7 @@ impl AppData {
     }
 
     #[allow(mutable_transmutes)]
+    #[allow(invalid_value)]
     pub fn argon2(&self, password: &str) -> crate::models::PasswordHash {
         use std::mem::*;
 
@@ -59,24 +60,24 @@ impl AppData {
         return hash.into();
     }
 
-    pub async fn validate_password(&self, hash: PasswordHash, password: &str) -> LogResult<()> {
+    pub async fn validate_password(&self, hash: PasswordHash, password: &str) -> crate::Result<(), ResponseError> {
         if hash == self.argon2(password) {
             return Ok(());
         }
 
-        Err(LoggableResponseError::new(
+        Err(ResponseError::new(
             "A user entered invalid password",
             "Invalid username or password",
             LogLevel::Information,
             StatusCode::UNAUTHORIZED))
     }
 
-    pub fn jwt_encode(&self, claims: &JwtClaims) -> LogResult<String> {
+    pub fn jwt_encode(&self, claims: &JwtClaims) -> crate::Result<String, ResponseError> {
         match jsonwebtoken::encode(&Header::default(),
         claims,
         &EncodingKey::from_secret(Self::JWT_SECRET.as_ref())) {
             Ok(jwt) => Ok(jwt),
-            Err(err) => Err(LoggableResponseError::new(
+            Err(err) => Err(ResponseError::new(
                 "Encoding JSON Web token failed",
                 match err.kind() {
                     jsonwebtoken::errors::ErrorKind::ExpiredSignature => "Session expired",
@@ -87,12 +88,12 @@ impl AppData {
         }
     }
 
-    pub fn jwt_decode(&self, jwt: &str) -> LogResult<JwtClaims> {
+    pub fn jwt_decode(&self, jwt: &str) -> crate::Result<JwtClaims, ResponseError> {
         match jsonwebtoken::decode(jwt,
             &DecodingKey::from_secret(Self::JWT_SECRET.as_ref()),
             &Validation::default()) {
             Ok(data) => Ok(data.claims),
-            Err(err) => Err(LoggableResponseError::new(
+            Err(err) => Err(ResponseError::new(
                 "Decoding JSON Web token failed",
                 match err.kind() {
                     jsonwebtoken::errors::ErrorKind::ExpiredSignature => "Session expired",

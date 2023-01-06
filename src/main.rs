@@ -12,6 +12,9 @@ mod traits;
 mod logging;
 mod media;
 
+use logging::LoggableError as Error;
+type Result<T, E = Error> = std::result::Result<T, E>;
+
 #[cfg(test)]
 mod tests;
 
