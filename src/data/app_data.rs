@@ -1,21 +1,21 @@
 use actix_web::http::StatusCode;
 use diesel::PgConnection;
-use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
-use jsonwebtoken::{Header, EncodingKey, Validation, DecodingKey};
+use diesel::r2d2::{ ConnectionManager, Pool, PooledConnection };
+use jsonwebtoken::{ Header, EncodingKey, Validation, DecodingKey };
 use tokio::sync::Mutex;
 use xxhash_rust::xxh3::Xxh3;
 
-use crate::logging::{LoggableResponseError, LogLevel, LogResult};
-use crate::models::{JwtClaims, PasswordHash};
+use crate::logging::{ LoggableResponseError, LogLevel, LogResult };
+use crate::models::{ JwtClaims, PasswordHash};
 
 pub struct AppData {
     db_pool: Pool<ConnectionManager<PgConnection>>,
-    xxh3: Mutex<Xxh3>
+    xxh3: Mutex<Xxh3>,
 }
 
 impl AppData {
     const JWT_SECRET: &str = "2b9e6f9ec298c3a7ebde69e941ed2d81";
-    
+
     pub fn create(database_url: &str) -> Self {
 
         let manager = ConnectionManager::new(database_url);
@@ -73,7 +73,7 @@ impl AppData {
 
     pub fn jwt_encode(&self, claims: &JwtClaims) -> LogResult<String> {
         match jsonwebtoken::encode(&Header::default(),
-        claims, 
+        claims,
         &EncodingKey::from_secret(Self::JWT_SECRET.as_ref())) {
             Ok(jwt) => Ok(jwt),
             Err(err) => Err(LoggableResponseError::new(
@@ -88,8 +88,8 @@ impl AppData {
     }
 
     pub fn jwt_decode(&self, jwt: &str) -> LogResult<JwtClaims> {
-        match jsonwebtoken::decode(jwt, 
-            &DecodingKey::from_secret(Self::JWT_SECRET.as_ref()), 
+        match jsonwebtoken::decode(jwt,
+            &DecodingKey::from_secret(Self::JWT_SECRET.as_ref()),
             &Validation::default()) {
             Ok(data) => Ok(data.claims),
             Err(err) => Err(LoggableResponseError::new(
