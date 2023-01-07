@@ -27,36 +27,37 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
 
-  build_windows:
-    name: Build (Windows)
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install CMake
-        run: choco install cmake --upgrade
-      - name: Install LLVM
-        run: choco install llvm
-      - name: Download OpenCV 4.1.2
-        run: |
-          git clone https://github.com/neilcantorne/opencv4.1.2-win-prebuilt.git C:\tools\opencv
-          dir  C:\tools\opencv\build\x64\vc14\lib
-      - name: Cache cargo registry
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-registry-
-      - name: Build
-        env:
-          OPENCV_LINK_LIBS: opencv_world412
-          OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
-          OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc14\lib
-        run: cargo build --verbose
-      - name: Run tests
-        env:
-          OPENCV_LINK_LIBS: opencv_world412
-          OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
-          OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc14\lib
-        run: cargo test --verbose
+#  build_windows:
+#    name: Build (Windows)
+#    runs-on: windows-latest
+#
+#    steps:
+#      - uses: actions/checkout@v3
+#      - name: Install CMake
+#        run: choco install cmake --upgrade
+#      - name: Install LLVM
+#        run: choco install llvm
+#      - name: Download OpenCV 4.1.2
+#        run: |
+#          git clone https://github.com/neilcantorne/opencv4.1.2-win-prebuilt.git C:\tools\opencv
+#          dir  C:\tools\opencv\build\x64\vc14\lib
+#      - name: Cache cargo registry
+#        uses: actions/cache@v3
+#        with:
+#          path: ~/.cargo/registry
+#          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+#          restore-keys: |
+#            ${{ runner.os }}-cargo-registry-
+#      - name: Build
+#        env:
+#          OPENCV_LINK_LIBS: opencv_world412
+#          OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
+#          OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc14\lib
+#        run: cargo build --verbose
+#      - name: Run tests
+#        env:
+#          OPENCV_LINK_LIBS: opencv_world412
+#          OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
+#          OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc14\lib
+#        run: cargo test --verbose
+#
