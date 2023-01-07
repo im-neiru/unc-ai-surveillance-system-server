@@ -37,9 +37,9 @@ jobs:
         run: choco install cmake --upgrade
       - name: Install LLVM
         run: choco install llvm
-      - name: Install OpenCV
+      - name: Download OpenCV 4.1.2
         run: |
-          choco install opencv
+          git clone https://github.com/neilcantorne/opencv4.1.2-win-prebuilt.git C:\tools\opencv
           dir  C:\tools\opencv\build\x64\vc14\lib
       - name: Cache cargo registry
         uses: actions/cache@v3
