@@ -21,7 +21,21 @@ jobs:
     - name: Install Clang and LLVM
       run: sudo apt install libopencv-dev clang libclang-dev
     - name: Install OpenCV
-      run: sudo apt install libopencv-dev python3-opencv
+      run: |
+        if dpkg -l | grep -q 'libopencv-dev'; then
+          echo "OpenCV is already installed"
+        else
+          sudo apt-get update
+          sudo apt install -y libopencv-dev python3-opencv
+        fi
+    - name: Install libpq
+      run: |
+        if dpkg -l | grep -q 'libpq-dev'; then
+          echo "libpq is already installed"
+        else
+          sudo apt-get update
+          sudo apt install -y libpq-dev
+        fi
     - name: Build
       run: cargo build --verbose
     - name: Run tests
