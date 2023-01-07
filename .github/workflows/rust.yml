@@ -36,13 +36,11 @@ jobs:
       - name: Install CMake
         run: choco install cmake --upgrade
       - name: Install LLVM
-        run: |
-          choco install llvm
-          vcpkg install llvm
+        run: choco install llvm
       - name: Install OpenCV
-        run: |
-          choco install opencv
-          vcpkg install opencv4
+        run: choco install opencv
+      - name: vcpkg install llvm opencv4
+        run: vcpkg install llvm opencv4
       - name: Cache cargo registry
         uses: actions/cache@v3
         with:
