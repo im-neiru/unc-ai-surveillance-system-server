@@ -51,12 +51,12 @@ jobs:
       - name: Build
         env:
           OPENCV_LINK_LIBS: opencv_world412
-          OPENCV_LINK_PATHS: C:\tools\opencv\build\include
-          OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\x64\vc14\lib
+          OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
+          OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc14\lib
         run: cargo build --verbose
       - name: Run tests
         env:
           OPENCV_LINK_LIBS: opencv_world412
-          OPENCV_LINK_PATHS: C:\tools\opencv\build\include
-          OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\x64\vc14\lib
+          OPENCV_INCLUDE_PATHS: C:\tools\opencv\build\include
+          OPENCV_LINK_PATHS: C:\tools\opencv\build\x64\vc14\lib
         run: cargo test --verbose
