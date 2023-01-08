@@ -35,15 +35,5 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 # Install cargo
 RUN apt-get install -y cargo
 
-EXPOSE 8080
-
-# Set the default Rust toolchain
-
-# Copy project inside the container
-COPY . /server
-
-# Set working directory
-WORKDIR /server
-
-# Start the server
-CMD ["cargo", "run"]
+# Install diesel cli
+RUN cargo install diesel_cli --no-default-features --features postgres
