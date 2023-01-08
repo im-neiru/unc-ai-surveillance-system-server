@@ -14,7 +14,7 @@ pub struct AppData {
 }
 
 impl AppData {
-    const JWT_SECRET: &str = "2b9e6f9ec298c3a7ebde69e941ed2d81";
+    const JWT_SECRET: &'static str = "2b9e6f9ec298c3a7ebde69e941ed2d81";
 
     pub fn create(database_url: &str) -> Self {
 

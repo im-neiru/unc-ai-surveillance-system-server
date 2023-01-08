@@ -24,7 +24,7 @@ impl Camera {
         source.new_camera()
     }
 
-    pub async fn begin(&mut self) -> crate::Result<CameraReader> {
+    pub async fn begin<'a>(&'a mut self) -> crate::Result<CameraReader<'a>> {
         let w; let h;
 
         {
@@ -34,7 +34,7 @@ impl Camera {
             h = vc.get(CAP_PROP_FRAME_HEIGHT)? as u32;
         }
 
-        Ok(CameraReader {
+        Ok(CameraReader::<'a> {
             camera: self,
             buffer: super::Frame::new(w, h)?,
         })
