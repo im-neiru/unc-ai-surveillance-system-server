@@ -1,4 +1,0 @@
-web-server:
-  port: 8080
-  address: "localhost"
-database-url: "postgres://unc_client:oJnZisXKd51v3X4eoXCi@localhost/covid_protocols"
