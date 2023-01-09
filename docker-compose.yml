@@ -1,0 +1,42 @@
+version: "3.9"
+services:
+  web:
+    image: unc-ai/web
+    build:
+      context: .
+      args:
+        APP_DIR: /server
+    working_dir: /server
+    hostname: uncweb
+    ports:
+      - "8029:8080" # web server port mapping
+      - "12010-13000:12010-13000" # expose video stream
+    volumes:
+      - /dev/video2:/dev/video0 # map usb webcam (for testing)
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://masked_admin:ya8kVY3g5npGv9cLSwrU_m@db/db_covid_protocols
+      DB_FOR_CLIENT_URL: postgres://masked_client:g1PxL1Lyvd8YqZ0U2x@db/db_covid_protocols
+      ACTIX_PORT: 8080 # web server port
+    networks:
+      vpcbr:
+        ipv4_address: 192.168.100.101
+    privileged: true
+  db:
+    image: postgres:15.1-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: masked_admin
+      POSTGRES_PASSWORD: ya8kVY3g5npGv9cLSwrU_m # change on production
+      POSTGRES_DB: db_covid_protocols
+      POSTGRES_INITDB_ARGS: --encoding=UTF8
+    networks:
+        vpcbr:
+          ipv4_address: 192.168.100.105
+networks:
+  vpcbr:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
