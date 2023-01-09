@@ -53,7 +53,7 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
             .service(routes::users::scope())
             .service(routes::logs::scope())
     })
-    .bind(server_config.web_server.clone())?
+    .bind(server_config.actix_socket_addr())?
     .run()
     .await
 }
