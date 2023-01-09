@@ -1,18 +1,19 @@
 version: "3.9"
 services:
   web:
-    image: unc-ai/web
-    build:
-      context: .
-      args:
-        APP_DIR: /server
-    working_dir: /server
+    image: neildocking/unc-ai-web
+    #build:
+    #  context: .
+      #args:
+      #  APP_DIR: /server
+    #working_dir: /server
     hostname: uncweb
     ports:
       - "8029:8080" # web server port mapping
       - "12010-13000:12010-13000" # expose video stream
     volumes:
       - /dev/video2:/dev/video0 # map usb webcam (for testing)
+      - .:/server
     depends_on:
       - db
     environment:
@@ -23,9 +24,12 @@ services:
       vpcbr:
         ipv4_address: 192.168.100.101
     privileged: true
+    command: bash
   db:
     image: postgres:15.1-alpine
     restart: always
+    ports:
+      - "25432:5432" # access port for pgAdmin
     environment:
       POSTGRES_USER: masked_admin
       POSTGRES_PASSWORD: ya8kVY3g5npGv9cLSwrU_m # change on production
