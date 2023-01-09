@@ -12,7 +12,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 serde_json = "1.0"
 diesel = { version = "2.0.0", features = ["postgres", "r2d2", "uuid", "chrono"] }
-base64 = "0.20.0"
+base64 = "0.21.0"
 just-argon2 = "1.2.0"
 uuid = { version = "1.1.2", features = ["serde", "v4"] }
 chrono = "0.4.22"
@@ -20,5 +20,5 @@ jsonwebtoken = "8.1.1"
 seq-macro = "0.3"
 xxhash-rust = { version = "0.8.6", features = ["xxh3"] }
 aes-gcm = "0.10.1"
-opencv = "0.74.2"
 ring = "0.16.20"
+opencv = "0.74.2"
