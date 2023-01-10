@@ -6,13 +6,16 @@ services:
     #  context: .
       #args:
       #  APP_DIR: /server
-    #working_dir: /server
+    working_dir: /server
+    #restart: unless-stopped
+    command: [bash]
+    entrypoint: ["tail", "-f", "/dev/null"]
     hostname: uncweb
     ports:
       - "8029:8080" # web server port mapping
-      - "12010-13000:12010-13000" # expose video stream
+      #- "12010-13000:12010-13000" # expose video stream
     volumes:
-      - /dev/video2:/dev/video0 # map usb webcam (for testing)
+      - /dev/video0:/dev/video0 # map usb webcam (for testing)
       - .:/server
     depends_on:
       - db
@@ -20,11 +23,6 @@ services:
       DATABASE_URL: postgres://masked_admin:ya8kVY3g5npGv9cLSwrU_m@db/db_covid_protocols
       DB_FOR_CLIENT_URL: postgres://masked_client:g1PxL1Lyvd8YqZ0U2x@db/db_covid_protocols
       ACTIX_PORT: 8080 # web server port
-    networks:
-      vpcbr:
-        ipv4_address: 192.168.100.101
-    privileged: true
-    command: bash
   db:
     image: postgres:15.1-alpine
     restart: always
@@ -35,12 +33,3 @@ services:
       POSTGRES_PASSWORD: ya8kVY3g5npGv9cLSwrU_m # change on production
       POSTGRES_DB: db_covid_protocols
       POSTGRES_INITDB_ARGS: --encoding=UTF8
-    networks:
-        vpcbr:
-          ipv4_address: 192.168.100.105
-networks:
-  vpcbr:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 192.168.100.0/24
