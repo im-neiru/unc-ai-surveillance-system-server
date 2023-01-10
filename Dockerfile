@@ -18,27 +18,37 @@ RUN apt-get install -y \
     libopenexr-dev \
     libtiff-dev \
     libwebp-dev \
-    lldb
+    lldb \
+    curl
 
 ENV TZ="Asia/Taipei"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get install -y libopencv-dev
 
-# Set environment variables
-ENV RUSTUP_HOME=/usr/local/rustup \
-    CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.66.0
+# Optional terminal
+RUN apt-get install -y fish
+
 
 # Install Rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
+# Set environment variables
+ENV RUSTUP_HOME=/root/.rustup/ \
+    CARGO_HOME=/root/.cargo/ \
+    PATH=/root/.cargo/bin/:${PATH} \
+    RUST_VERSION=1.66.0
 
 # Install cargo
-RUN apt-get install -y cargo
+# RUN apt-get install -y cargo
+
+# Switch to stable toolchain 
+RUN /root/.cargo/bin/rustup default stable 
 
 # Install diesel cli
-RUN cargo install diesel_cli --no-default-features --features postgres
+RUN /root/.cargo/bin/cargo install diesel_cli --no-default-features --features postgres
+
+# Test rustc
+RUN rustc --version
 
 # Expose ports for lldb-server
 # EXPOSE 31166
@@ -46,4 +56,3 @@ RUN cargo install diesel_cli --no-default-features --features postgres
 
 # Setup lldb-server-start script
 # RUN chmod +x /usr/local/bin/lldb-server-start.sh
-

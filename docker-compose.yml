@@ -16,7 +16,10 @@ services:
       #- "12010-13000:12010-13000" # expose video stream
     volumes:
       - /dev/video0:/dev/video0 # map usb webcam (for testing)
-      - .:/server
+      - type: bind
+        source: .
+        target: /server
+        read_only: false
     depends_on:
       - db
     environment:
