@@ -24,6 +24,8 @@ pub trait AsLoggableResponse {
         status_code: StatusCode) -> LoggableResponseError;
 }
 
+#[derive(Debug, Clone)]
+#[derive(PartialEq, Eq)]
 pub struct LoggableError {
     message: String,
     level: super::LogLevel,
