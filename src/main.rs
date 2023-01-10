@@ -11,6 +11,7 @@ mod schema;
 mod traits;
 mod logging;
 mod media;
+mod dnn;
 
 use logging::LoggableError as Error;
 type Result<T, E = Error> = std::result::Result<T, E>;
@@ -36,7 +37,7 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     let logger = actix_web::web::Data::new(Mutex::new(LogRecorder::new()));
     let surveillance = actix_web::web::Data::new({
         let mut inner = media::Surveillance::new();
-        match inner.add_camera(1u32) {
+        match inner.add_camera("/dev/video0") {
             Err(error) => logger.lock().await.record(&error, None),
             _ => (),
         }
