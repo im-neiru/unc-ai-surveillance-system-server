@@ -41,12 +41,9 @@ RUN apt-get install -y cargo
 RUN cargo install diesel_cli --no-default-features --features postgres
 
 # Expose ports for lldb-server
-EXPOSE 31166
-EXPOSE 31200-31300
+# EXPOSE 31166
+# EXPOSE 31200-31300
 
 # Setup lldb-server-start script
-COPY lldb-server-start.sh /usr/local/bin/lldb-server-start.sh
-RUN chmod +x /usr/local/bin/lldb-server-start.sh
+# RUN chmod +x /usr/local/bin/lldb-server-start.sh
 
-# Run lldb-server if on debug mode
-CMD ["/usr/local/bin/lldb-server-start.sh"]
