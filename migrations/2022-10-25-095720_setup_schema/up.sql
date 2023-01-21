@@ -1,5 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE USER unc_client WITH PASSWORD 'g1PxL1Lyvd8YqZ0U2x';
+
 -- Create tables
 CREATE TABLE users(
     id uuid DEFAULT uuid_generate_v4(),
@@ -53,6 +55,13 @@ CREATE TABLE protocol_violations(
     PRIMARY KEY(id)
 );
 
+CREATE TABLE cameras(
+    id integer NOT NULL,
+    camera_url VARCHAR(512) NOT NULL,
+    
+    PRIMARY KEY(id)
+);
+
 -- Sample users
 DO $$
     DECLARE password_argon2 BYTEA := decode('Wo+1JdceNVhCjdKSAPq6bDUJJKgFfwhJyCPjCXVQ6tp7lAeHu6YMsmJB3AYusuLsO9ym6EemeN2FJnWOx/Ta2g==', 'base64');
@@ -84,3 +93,7 @@ GRANT
 GRANT
     SELECT, INSERT, UPDATE 
     ON protocol_violations TO unc_client;
+
+GRANT
+    SELECT, INSERT, UPDATE 
+    ON cameras TO unc_client;

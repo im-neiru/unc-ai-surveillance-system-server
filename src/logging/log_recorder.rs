@@ -72,3 +72,19 @@ impl LogRecorder {
         return json;
     }
 }
+
+pub trait LogOnError<T> {
+    fn log_on_error(self, logger: &mut LogRecorder) -> T;
+}
+
+impl<T, E: super::Loggable > LogOnError<Option<T>> for std::result::Result<T, E>  {
+    fn log_on_error(self, logger: &mut LogRecorder) -> Option<T> {
+        match self {
+            Ok(val) => Some(val),
+            Err(err) => {
+                logger.record(&err, None);
+                None
+            }
+        }
+    }
+}

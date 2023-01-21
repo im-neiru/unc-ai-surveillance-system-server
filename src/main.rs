@@ -22,6 +22,8 @@ mod tests;
 use server_config::ServerConfig;
 use data::AppData;
 
+use crate::logging::LogOnError;
+
 fn main() -> std::io::Result<()> {
     let server_config = ServerConfig::load();
 
@@ -36,13 +38,12 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     let data = actix_web::web::Data::new(AppData::create(&server_config.database_url));
     let logger = actix_web::web::Data::new(Mutex::new(LogRecorder::new()));
     let surveillance = actix_web::web::Data::new({
-        let mut inner = media::Surveillance::new();
-        match inner.add_camera("/dev/video0") {
-            Err(error) => logger.lock().await.record(&error, None),
-            _ => (),
-        }
-
-        inner
+        let mut logger = logger.lock().await;
+        
+        media::Surveillance::new()
+            .await
+            .log_on_error(&mut logger)
+            .expect("Failed to start surveillance")
     });
 
     HttpServer::new(move || {

@@ -26,7 +26,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get install -y libopencv-dev
 
 # Optional terminal
-RUN apt-get install -y fish
+RUN apt-get install -y fish git
 
 
 # Install Rust

@@ -15,15 +15,17 @@ use crate::logging::LoggableError;
 
 pub struct Surveillance {
     cameras: HashMap<CameraId, super::Camera, BuildCameraIdHasher>,
-    rng: SystemRandom
+    rng: SystemRandom,
+    dnn: crate::dnn::Context
 }
 
 impl Surveillance {
-    pub fn new() -> Self {
-        Self {
+    pub async fn new() -> crate::Result<Self> {
+        Ok(Self {
             cameras: HashMap::with_hasher(BuildCameraIdHasher),
-            rng: SystemRandom::new()
-        }
+            rng: SystemRandom::new(),
+            dnn: crate::dnn::Context::new().await?
+        })
     }
 
     pub fn add_camera(&mut self, source: impl super::camera::CameraSource) -> crate::Result<CameraId> {

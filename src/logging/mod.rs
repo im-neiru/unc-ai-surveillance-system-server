@@ -10,4 +10,4 @@ pub use loggable::{
     LoggableResponseError as ResponseError,
     LogLevel,
 };
-pub use log_recorder::LogRecorder;
+pub use log_recorder::{ LogRecorder, LogOnError };

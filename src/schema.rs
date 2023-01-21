@@ -8,6 +8,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    cameras (id) {
+        id -> Int4,
+        camera_url -> Varchar,
+    }
+}
+
+diesel::table! {
     protocol_violations (id) {
         id -> Uuid,
         personnel_id -> Uuid,
@@ -56,6 +63,7 @@ diesel::joinable!(sessions -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     area,
+    cameras,
     protocol_violations,
     protocol_violators,
     sessions,
