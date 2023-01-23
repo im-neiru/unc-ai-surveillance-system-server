@@ -1,0 +1,44 @@
+{
+	"info": {
+		"_postman_id": "ab7abec1-4d41-4a14-b958-6c275aabcc1a",
+		"name": "UNC-AI-Server",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "http://127.0.0.1:8029/users/login",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"vladimir\",\n    \"password\": \"Arcon#123\",\n    \"device-os\": \"windows\",\n    \"device-name\": \"Dell Inspiron 15 3000\",\n    \"device-signature\": \"4b44829fa912965a\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8029/users/login",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8029",
+					"path": [
+						"users",
+						"login"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
