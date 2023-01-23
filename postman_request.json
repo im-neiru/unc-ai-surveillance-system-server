@@ -7,11 +7,8 @@
 	"item": [
 		{
 			"name": "http://127.0.0.1:8029/users/login",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
