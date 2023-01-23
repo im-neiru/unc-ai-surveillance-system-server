@@ -64,7 +64,7 @@ CREATE TABLE cameras(
 
 -- Sample users
 DO $$
-    DECLARE password_argon2 BYTEA := decode('Wo+1JdceNVhCjdKSAPq6bDUJJKgFfwhJyCPjCXVQ6tp7lAeHu6YMsmJB3AYusuLsO9ym6EemeN2FJnWOx/Ta2g==', 'base64');
+    DECLARE password_argon2 BYTEA := decode('kP/piFX/pcdVCl+eId23LQQX3GbYcgSsgWI0/eBNbJ8PMgq1p371HL0QIKlHKe3IDRWSKypIbIvk9wWwJHvsRg==', 'base64');
 BEGIN
     INSERT INTO users(username, first_name, last_name, password_hash, assigned_role)
     VALUES
