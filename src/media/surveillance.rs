@@ -8,15 +8,11 @@ use std::{
 };
 
 use ring::rand::{ SystemRandom, SecureRandom };
-
-use actix_web::http::StatusCode;
-
 use crate::logging::LoggableError;
 
 pub struct Surveillance {
     cameras: HashMap<CameraId, super::Camera, BuildCameraIdHasher>,
     rng: SystemRandom,
-    dnn: crate::dnn::Context
 }
 
 impl Surveillance {
@@ -24,7 +20,6 @@ impl Surveillance {
         Ok(Self {
             cameras: HashMap::with_hasher(BuildCameraIdHasher),
             rng: SystemRandom::new(),
-            dnn: crate::dnn::Context::new().await?
         })
     }
 

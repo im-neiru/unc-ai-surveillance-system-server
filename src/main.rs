@@ -11,7 +11,6 @@ mod schema;
 mod traits;
 mod logging;
 mod media;
-mod dnn;
 
 use logging::LoggableError as Error;
 type Result<T, E = Error> = std::result::Result<T, E>;
