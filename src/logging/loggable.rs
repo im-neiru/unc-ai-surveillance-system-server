@@ -141,11 +141,13 @@ impl std::fmt::Display for LoggableResponseError {
 
 // Conversions
 
+/*
 impl From<opencv::Error> for LoggableError {
     fn from(value: opencv::Error) -> Self {
         Self::new(
-            &format!("OpenCV Error: {}:{}", value.code, value.message),
+            format!("OpenCV Error: {}:{}", value.code, value.message),
             LogLevel::Trace,
         )
     }
 }
+*/
