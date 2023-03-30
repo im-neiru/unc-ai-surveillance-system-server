@@ -21,8 +21,6 @@ mod tests;
 use server_config::ServerConfig;
 use data::AppData;
 
-use crate::logging::LogOnError;
-
 fn main() -> std::io::Result<()> {
     let server_config = ServerConfig::load();
     println!("Starting");
@@ -44,7 +42,7 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
             .await
             .log_on_error(&mut logger)
             .expect("Failed to start surveillance")
-    })*/;
+    })*/
 
     HttpServer::new(move || {
         App::new()

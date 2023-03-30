@@ -1,24 +1,17 @@
 use actix_web::http::StatusCode;
-use actix_web::{post, web};
 use actix_web::Responder;
+use actix_web::{post, web};
 
 use chrono::Utc;
-use diesel::r2d2::{PooledConnection, ConnectionManager};
-use diesel::{QueryDsl, RunQueryDsl, PgConnection, ExpressionMethods, OptionalExtension};
+use diesel::r2d2::{ConnectionManager, PooledConnection};
+use diesel::{ExpressionMethods, OptionalExtension, PgConnection, QueryDsl, RunQueryDsl};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::data::AppData;
-use crate::logging::{ ResponseError, LogLevel };
-use crate::models::{
-    UserSelect,
-    DeviceSignature,
-    DeviceOs,
-    JwtClaims,
-    SessionInsert,
-    UserClaims
-};
+use crate::logging::{LogLevel, ResponseError};
+use crate::models::{DeviceOs, DeviceSignature, JwtClaims, SessionInsert, UserClaims, UserSelect};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct LoginData {
@@ -33,29 +26,34 @@ struct LoginData {
 }
 
 #[post("/login")]
-async fn post_login((body, state): (web::Json<LoginData>, web::Data<AppData>)) -> super::Result<impl Responder> {
+async fn post_login(
+    (body, state): (web::Json<LoginData>, web::Data<AppData>),
+) -> super::Result<impl Responder> {
     let mut database = state.connect_database();
     let user = UserSelect::select_by_username(&mut database, &body.username)?;
 
-    state.validate_password(user.password_hash, &body.password).await?;
+    state
+        .validate_password(user.password_hash, &body.password)
+        .await?;
     let jwt = create_session(state, &mut database, &body, user).await?;
 
-    Ok(json!({
-        "jwt": jwt
-    })
-    .to_string()
-    .customize()
-    .append_header(("Content-Type", "application/json"))
-    .with_status(StatusCode::OK))
+    Ok(json!({ "jwt": jwt })
+        .to_string()
+        .customize()
+        .append_header(("Content-Type", "application/json"))
+        .with_status(StatusCode::OK))
 }
 
-async fn create_session(state: web::Data<AppData>,
+async fn create_session(
+    state: web::Data<AppData>,
     database: &mut PooledConnection<ConnectionManager<PgConnection>>,
     login_data: &LoginData,
-    user: UserSelect) -> super::Result<String> {
-
-
-    let dev_hash = state.xxh3_128bits(login_data.device_signature.into()).await.to_ne_bytes();
+    user: UserSelect,
+) -> super::Result<String> {
+    let dev_hash = state
+        .xxh3_128bits(login_data.device_signature.into())
+        .await
+        .to_ne_bytes();
 
     let session_id = {
         use crate::schema::sessions::dsl::*;
@@ -67,41 +65,48 @@ async fn create_session(state: web::Data<AppData>,
         );
 
         diesel::insert_into(sessions)
-        .values(&record)
-        .on_conflict(device_hash)
-        .do_update()
-        .set(last_login.eq(Utc::now().naive_utc()))
-        .returning(id)
-        .get_result::<uuid::Uuid>(&mut *database)
-        .unwrap()
+            .values(&record)
+            .on_conflict(device_hash)
+            .do_update()
+            .set(last_login.eq(Utc::now().naive_utc()))
+            .returning(id)
+            .get_result::<uuid::Uuid>(&mut *database)
+            .unwrap()
     };
 
-    Ok(state.jwt_encode(&JwtClaims::new(session_id) )?)
+    state.jwt_encode(&JwtClaims::new(session_id))
 }
 
 #[actix_web::get("/info")]
-async fn get_info((state, user): (web::Data<AppData>, UserClaims)) -> super::Result<impl Responder> {
+async fn get_info(
+    (state, user): (web::Data<AppData>, UserClaims),
+) -> super::Result<impl Responder> {
     use crate::schema::users;
 
     let database = &mut *state.connect_database();
-    let (username, last_name, first_name) = match users::table.select((
-        users::username,
-        users::first_name,
-        users::last_name,
-    )).filter(users::id.eq(user.id))
-    .first::<(String, String, String)>(database)
-    .optional() {
+    let (username, last_name, first_name) = match users::table
+        .select((users::username, users::first_name, users::last_name))
+        .filter(users::id.eq(user.id))
+        .first::<(String, String, String)>(database)
+        .optional()
+    {
         Ok(Some(val)) => val,
-        Ok(None) => return Err(ResponseError::new(
-            "Unable to retrieve user data",
-            "Unable to retrieve data",
-            LogLevel::Error,
-            StatusCode::INTERNAL_SERVER_ERROR)),
-        Err(_) => return Err(ResponseError::new(
-            "Unable to retrieve user data",
-            "Unable to retrieve data",
-            LogLevel::Error,
-            StatusCode::INTERNAL_SERVER_ERROR))
+        Ok(None) => {
+            return Err(ResponseError::new(
+                "Unable to retrieve user data",
+                "Unable to retrieve data",
+                LogLevel::Error,
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ))
+        }
+        Err(_) => {
+            return Err(ResponseError::new(
+                "Unable to retrieve user data",
+                "Unable to retrieve data",
+                LogLevel::Error,
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ))
+        }
     };
 
     Ok(json!({
@@ -117,7 +122,5 @@ async fn get_info((state, user): (web::Data<AppData>, UserClaims)) -> super::Res
 }
 
 pub fn scope() -> actix_web::Scope {
-    web::scope("/users")
-        .service(post_login)
-        .service(get_info)
+    web::scope("/users").service(post_login).service(get_info)
 }

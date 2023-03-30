@@ -1,38 +1,39 @@
 pub struct LogRecorder {
-    entries: Vec<LogEntry>
+    entries: Vec<LogEntry>,
 }
 
 pub(super) struct LogEntry {
     pub(super) level: super::LogLevel,
     pub(super) message: String,
     pub(super) timestamp: chrono::DateTime<chrono::Utc>,
-    pub(super) path: Option<String>
+    pub(super) path: Option<String>,
 }
 
 impl LogRecorder {
-
     #[inline]
     pub fn new() -> Self {
-        Self { entries: Vec::new() }
+        Self {
+            entries: Vec::new(),
+        }
     }
 
     #[inline]
-    pub fn record<L>(&mut self, log: &L, path: Option<&str>) where L: super::Loggable + Sized {
+    pub fn record<L>(&mut self, log: &L, path: Option<&str>)
+    where
+        L: super::Loggable + Sized,
+    {
         self.entries.push(LogEntry {
             level: log.level(),
             message: log.message().to_owned(),
             timestamp: log.timestamp(),
-            path: match path {
-                Some(val) => Some(val.to_string()),
-                None => None
-            }
+            path: path.map(|val| val.to_string()),
         })
     }
 
     #[inline]
     pub fn retrieve(&self, index: i32, mut length: i32) -> String {
         if (index + length) as usize > self.entries.len() {
-            length = self.entries.len() as i32- index;
+            length = self.entries.len() as i32 - index;
         }
 
         let start = index as usize;
@@ -51,16 +52,15 @@ impl LogRecorder {
                 super::LogLevel::Trace => "trace",
             };
 
-            let timestamp = entry
-                .timestamp
-                .to_rfc3339();
+            let timestamp = entry.timestamp.to_rfc3339();
 
             let element = serde_json::json!({
                 "level": level,
                 "message": entry.message,
                 "timestamp": timestamp,
                 "path": entry.path,
-            }).to_string();
+            })
+            .to_string();
 
             json.push_str(&element);
             json.push(',');
@@ -69,7 +69,7 @@ impl LogRecorder {
         json.pop();
         json.push_str("]}");
 
-        return json;
+        json
     }
 }
 
@@ -77,7 +77,7 @@ pub trait LogOnError<T> {
     fn log_on_error(self, logger: &mut LogRecorder) -> T;
 }
 
-impl<T, E: super::Loggable > LogOnError<Option<T>> for std::result::Result<T, E>  {
+impl<T, E: super::Loggable> LogOnError<Option<T>> for std::result::Result<T, E> {
     fn log_on_error(self, logger: &mut LogRecorder) -> Option<T> {
         match self {
             Ok(val) => Some(val),

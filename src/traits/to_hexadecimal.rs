@@ -14,6 +14,8 @@ macro_rules! hex_of {
     };
 }
 
+#[allow(clippy::identity_op)]
+#[allow(clippy::eq_op)]
 impl ToHexadecimal for u128 {
 
     fn to_hexadecimal(&self) -> String {

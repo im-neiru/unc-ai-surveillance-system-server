@@ -1,9 +1,7 @@
-use actix_web::http::{ StatusCode, header::HeaderValue };
-use chrono::{ DateTime, Utc };
+use actix_web::http::{header::HeaderValue, StatusCode};
+use chrono::{DateTime, Utc};
 
-#[derive(Copy, Clone)]
-#[derive(Debug)]
-#[derive(PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum LogLevel {
     Error,
     Warning,
@@ -13,19 +11,20 @@ pub enum LogLevel {
 }
 
 pub trait Loggable {
-    fn message<'a>(&'a self) -> &'a str;
+    fn message(&self) -> &str;
     fn level(&self) -> super::LogLevel;
     fn timestamp(&self) -> chrono::DateTime<chrono::Utc>;
 }
 
 pub trait AsLoggableResponse {
-    fn as_response(self,
+    fn into_response(
+        self,
         response_message: impl Into<String>,
-        status_code: StatusCode) -> LoggableResponseError;
+        status_code: StatusCode,
+    ) -> LoggableResponseError;
 }
 
-#[derive(Debug, Clone)]
-#[derive(PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LoggableError {
     message: String,
     level: super::LogLevel,
@@ -33,6 +32,7 @@ pub struct LoggableError {
 }
 
 impl LoggableError {
+    #[allow(dead_code)]
     pub fn new(message: impl Into<String>, level: super::LogLevel) -> Self {
         Self {
             level,
@@ -43,9 +43,11 @@ impl LoggableError {
 }
 
 impl<T: Loggable> AsLoggableResponse for T {
-    fn as_response(self,
+    fn into_response(
+        self,
         response_message: impl Into<String>,
-        status_code: StatusCode) -> LoggableResponseError {
+        status_code: StatusCode,
+    ) -> LoggableResponseError {
         LoggableResponseError {
             log_message: self.message().to_string(),
             level: self.level(),
@@ -58,7 +60,7 @@ impl<T: Loggable> AsLoggableResponse for T {
 
 impl Loggable for LoggableError {
     #[inline]
-    fn message<'a>(&'a self) -> &'a str {
+    fn message(&self) -> &str {
         &self.message
     }
 
@@ -73,7 +75,6 @@ impl Loggable for LoggableError {
     }
 }
 
-
 #[derive(Clone, Debug)]
 pub struct LoggableResponseError {
     log_message: String,
@@ -84,10 +85,12 @@ pub struct LoggableResponseError {
 }
 
 impl LoggableResponseError {
-    pub fn new(log_message: impl Into<String>,
-            response_message: impl Into <String>,
-            level: LogLevel,
-            status_code: StatusCode) -> Self {
+    pub fn new(
+        log_message: impl Into<String>,
+        response_message: impl Into<String>,
+        level: LogLevel,
+        status_code: StatusCode,
+    ) -> Self {
         Self {
             log_message: log_message.into(),
             response_message: response_message.into(),
@@ -100,7 +103,7 @@ impl LoggableResponseError {
 
 impl Loggable for LoggableResponseError {
     #[inline]
-    fn message<'a>(&'a self) -> &'a str {
+    fn message(&self) -> &str {
         &self.log_message
     }
 
@@ -123,13 +126,15 @@ impl actix_web::ResponseError for LoggableResponseError {
     fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
         let mut res = actix_web::HttpResponse::new(self.status_code());
 
-        res.headers_mut()
-            .insert(actix_web::http::header::CONTENT_TYPE,
-                HeaderValue::from_static("application/json"));
+        res.headers_mut().insert(
+            actix_web::http::header::CONTENT_TYPE,
+            HeaderValue::from_static("application/json"),
+        );
 
-        res.set_body(actix_web::body::BoxBody::new(
-            format!("message: {}", self.response_message)
-        ))
+        res.set_body(actix_web::body::BoxBody::new(format!(
+            "message: {}",
+            self.response_message
+        )))
     }
 }
 

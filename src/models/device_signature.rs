@@ -7,22 +7,23 @@ use diesel::AsExpression;
 #[derive(PartialEq, Eq)]
 #[derive(AsExpression)]
 #[diesel(sql_type = Bytea)]
-pub struct DeviceSignature(SignitureBits);
+pub struct DeviceSignature(SignatureBits);
 
 #[repr(C)]
 #[derive(Clone, Copy, Eq)]
-union SignitureBits {
+union SignatureBits {
     integer: u128,
     bytes: [u8; 16]
 }
 
-impl PartialEq for SignitureBits {
+impl PartialEq for SignatureBits {
     fn eq(&self, other: &Self) -> bool {
         unsafe {
             <u128 as PartialEq>::eq(&self.integer, &other.integer)
         }
     }
 
+    #[allow(clippy::partialeq_ne_impl)]
     fn ne(&self, other: &Self) -> bool {
         unsafe {
             <u128 as PartialEq>::ne(&self.integer, &other.integer)
@@ -49,7 +50,7 @@ impl<'a> ToSql<Bytea, Pg> for DeviceSignature where &'a [u8]: ToSql<Bytea, Pg> {
     }
 }
 
-impl<'a> serde::Serialize for DeviceSignature {
+impl serde::Serialize for DeviceSignature {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer {
@@ -64,17 +65,14 @@ impl<'de> serde::Deserialize<'de> for DeviceSignature where String: serde::Deser
         D: serde::Deserializer<'de> {
         use crate::traits::FromHexadecimal;
         let hex = String::deserialize(deserializer)?;
-        let integer = u128::from_hexadecimal(&hex)
-            .or_else(|err| 
-                Err(serde::de::Error::custom(err.to_string()))
-            )?;
+        let integer = u128::from_hexadecimal(&hex).map_err(|err| serde::de::Error::custom(err.to_string()))?;
         
-        Ok(Self(SignitureBits { integer }))
+        Ok(Self(SignatureBits { integer }))
     }
 }
 
-impl Into<[u8; 16]> for DeviceSignature {
-    fn into(self) -> [u8; 16] {
-        unsafe { self.0.bytes }
+impl From<DeviceSignature> for [u8; 16] {
+    fn from(val: DeviceSignature) -> Self {
+        unsafe { val.0.bytes }
     }
 }
