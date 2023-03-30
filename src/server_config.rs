@@ -1,5 +1,5 @@
-use std::net::{ SocketAddrV4, Ipv4Addr };
-
+use dotenv::dotenv;
+use std::net::{Ipv4Addr, SocketAddrV4};
 
 pub struct ServerConfig {
     pub port: u16,
@@ -8,13 +8,18 @@ pub struct ServerConfig {
 
 impl ServerConfig {
     pub fn load() -> Self {
+        dotenv().ok();
+
         Self {
-            port: { std::env::var("ACTIX_PORT")
-                .expect("Please set env: ACTIX_PORT")
-                .parse::<u16>()
-                .expect("Invalid ACTIX_PORT") },
-            database_url: { std::env::var("DB_FOR_CLIENT_URL")
-                .expect("Please set env: DB_FOR_CLIENT_URL") },
+            port: {
+                std::env::var("ACTIX_PORT")
+                    .expect("Please set env: ACTIX_PORT")
+                    .parse::<u16>()
+                    .expect("Invalid ACTIX_PORT")
+            },
+            database_url: {
+                std::env::var("DB_FOR_CLIENT_URL").expect("Please set env: DB_FOR_CLIENT_URL")
+            },
         }
     }
 
