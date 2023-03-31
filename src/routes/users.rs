@@ -11,7 +11,9 @@ use serde_json::json;
 
 use crate::data::AppData;
 use crate::logging::{LogLevel, ResponseError};
-use crate::models::{DeviceOs, DeviceSignature, JwtClaims, SessionInsert, UserClaims, UserSelect};
+use crate::models::{
+    DeviceOs, DeviceSignature, JwtClaims, SessionInsert, UserClaims, UserRole, UserSelect,
+};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct LoginData {
@@ -23,6 +25,15 @@ struct LoginData {
     pub device_name: String,
     #[serde(alias = "device-signature")]
     pub device_signature: DeviceSignature,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+struct CreateUserRequest {
+    username: String,
+    first_name: String,
+    last_name: String,
+    password_hash: String,
+    assigned_role: UserRole,
 }
 
 #[post("/login")]
@@ -77,17 +88,17 @@ async fn create_session(
     state.jwt_encode(&JwtClaims::new(session_id))
 }
 
-#[actix_web::get("/info")]
-async fn get_info(
+#[actix_web::get("/current")]
+async fn get_current(
     (state, user): (web::Data<AppData>, UserClaims),
 ) -> super::Result<impl Responder> {
     use crate::schema::users;
 
     let database = &mut *state.connect_database();
-    let (username, last_name, first_name) = match users::table
-        .select((users::username, users::first_name, users::last_name))
+    let (username, first_name, last_name, assigned_role) = match users::table
+        .select((users::username, users::first_name, users::last_name, users::assigned_role))
         .filter(users::id.eq(user.id))
-        .first::<(String, String, String)>(database)
+        .first::<(String, String, String, UserRole)>(database)
         .optional()
     {
         Ok(Some(val)) => val,
@@ -114,6 +125,7 @@ async fn get_info(
         "username": username,
         "first-name": first_name,
         "last-name": last_name,
+        "assigned-role": assigned_role
     })
     .to_string()
     .customize()
@@ -121,6 +133,20 @@ async fn get_info(
     .with_status(StatusCode::OK))
 }
 
+/*
+#[actix_web::post("/register")]
+async fn post_create_user(
+    (state, request, user): (web::Data<AppData>, web::Json<CreateUserRequest>, UserClaims),
+) -> super::Result<impl Responder> {
+    //let mut connection = state.connect_database();
+
+
+
+    todo!();
+
+    //Ok()
+}
+*/
 pub fn scope() -> actix_web::Scope {
-    web::scope("/users").service(post_login).service(get_info)
+    web::scope("/users").service(post_login).service(get_current)
 }
