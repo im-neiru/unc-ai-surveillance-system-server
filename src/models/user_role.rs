@@ -8,9 +8,9 @@ use diesel::sql_types::SmallInt;
 #[derive(AsExpression, FromSqlRow)]
 #[diesel(sql_type = SmallInt)]
 pub enum UserRole {
-    SecurityGuard,
-    SecurityHead,
-    SystemAdmin,
+    SecurityGuard = 1,
+    SecurityHead = 2,
+    SystemAdmin = 3,
 }
 
 const NUMERIC_VALUES : [i16; 3] = [1, 2, 3];
@@ -28,11 +28,11 @@ impl ToSql<SmallInt, Pg> for UserRole where i16: ToSql<SmallInt, Pg> {
 impl FromSql<SmallInt, Pg> for UserRole where i16: FromSql<SmallInt, Pg> {
     fn from_sql(bytes: diesel::backend::RawValue<'_, Pg>) -> diesel::deserialize::Result<Self> {
 
-       match <i16 as FromSql::<SmallInt, Pg>>::from_sql(bytes)? {
-            1 => Ok(Self::SecurityGuard),
-            2 => Ok(Self::SecurityHead),
-            3 => Ok(Self::SystemAdmin),
-            _=> Err("Unrecognized UserRole variant".into())
-       }
+        match <i16 as FromSql::<SmallInt, Pg>>::from_sql(bytes)? {
+                1 => Ok(Self::SecurityGuard),
+                2 => Ok(Self::SecurityHead),
+                3 => Ok(Self::SystemAdmin),
+                _=> Err("Unrecognized UserRole variant".into())
+        }
     }
 }
