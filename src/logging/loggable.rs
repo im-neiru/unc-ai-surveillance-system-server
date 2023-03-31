@@ -1,5 +1,6 @@
 use actix_web::http::{header::HeaderValue, StatusCode};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 use crate::models::UserClaims;
 
@@ -130,6 +131,11 @@ impl Loggable for LoggableResponseError {
     }
 }
 
+#[derive(Deserialize, Serialize)]
+struct ResponseJson<'a> {
+    message: &'a str,
+}
+
 impl actix_web::ResponseError for LoggableResponseError {
     fn status_code(&self) -> StatusCode {
         self.status_code
@@ -143,10 +149,12 @@ impl actix_web::ResponseError for LoggableResponseError {
             HeaderValue::from_static("application/json"),
         );
 
-        res.set_body(actix_web::body::BoxBody::new(format!(
-            "message: {}",
-            self.response_message
-        )))
+        res.set_body(actix_web::body::BoxBody::new(
+            serde_json::to_string(&ResponseJson {
+                message: &self.response_message,
+            })
+            .unwrap(),
+        ))
     }
 }
 
