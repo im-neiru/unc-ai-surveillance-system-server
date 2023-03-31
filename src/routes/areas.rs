@@ -22,7 +22,9 @@ pub(crate) struct CreateAreaRequest {
 
 #[derive(Deserialize)]
 pub(crate) struct AssignRequest {
+    #[serde(alias = "user-id")]
     pub(crate) user_id: uuid::Uuid,
+    #[serde(alias = "area-code")]
     pub(crate) area_code: String,
 }
 
