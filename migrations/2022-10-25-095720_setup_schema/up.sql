@@ -76,6 +76,23 @@ BEGIN
     ('admin', 'Lien', 'Walker', password_argon2, 3);
 END $$;
 
+BEGIN
+    INSERT INTO users(username, first_name, last_name, password_hash, assigned_role)
+    VALUES
+    ('vladimir', 'Vlad', 'Tepes', password_argon2, 1),
+    ('rio', 'Rio', 'LeBlanc', password_argon2, 2),
+    ('admin', 'Lien', 'Walker', password_argon2, 3);
+END $$;
+
+-- Sample areas
+INSERT INTO public.areas(
+	code, name)
+	VALUES ('GT2', 'Secondary gate');
+	
+INSERT INTO public.areas(
+	code, name)
+	VALUES ('GT1', 'Primary gate');
+
 -- Configure privileges
 GRANT
     SELECT, INSERT, UPDATE 
