@@ -1,6 +1,8 @@
 use actix_web::http::{header::HeaderValue, StatusCode};
 use chrono::{DateTime, Utc};
 
+use crate::models::UserClaims;
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum LogLevel {
     Error,
@@ -96,6 +98,16 @@ impl LoggableResponseError {
             response_message: response_message.into(),
             level,
             status_code,
+            timestamp: chrono::Utc::now(),
+        }
+    }
+
+    pub fn unauthorized(user: UserClaims) -> Self {
+        Self {
+            log_message: format!("Denied access to user: {}", user.id),
+            response_message: "User unauthorized".into(),
+            level: LogLevel::Information,
+            status_code: StatusCode::UNAUTHORIZED,
             timestamp: chrono::Utc::now(),
         }
     }
