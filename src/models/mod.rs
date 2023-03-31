@@ -6,6 +6,7 @@ mod device_signature;
 mod jwt_claims;
 mod user_claims;
 mod session;
+mod area;
 
 pub use user_role::UserRole;
 pub use password_hash::PasswordHash;
@@ -17,3 +18,4 @@ pub use user::UserSelect;
 pub use session::SessionInsert;
 pub use jwt_claims::JwtClaims;
 pub use user_claims::UserClaims;
+pub use area::{AreaInsert, AreaSelect};
