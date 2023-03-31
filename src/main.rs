@@ -52,6 +52,7 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
             .wrap(logging::LogMiddleware)
             .service(routes::users::scope())
             .service(routes::logs::scope())
+            .service(routes::areas::scope())
     })
     .bind(server_config.actix_socket_addr())?
     .run()
