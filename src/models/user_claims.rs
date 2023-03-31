@@ -1,15 +1,15 @@
-use std::pin::Pin;
 use std::future::Future;
+use std::pin::Pin;
 
+use actix_web::dev::Payload;
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
-use actix_web::dev::Payload;
 
-use diesel::{Queryable, AsChangeset, QueryDsl, RunQueryDsl, ExpressionMethods};
+use diesel::{AsChangeset, ExpressionMethods, QueryDsl, Queryable, RunQueryDsl};
 
 use crate::data::AppData;
-use crate::logging::{ LogLevel, ResponseError };
+use crate::logging::{LogLevel, ResponseError};
 
 #[derive(Debug, Queryable, AsChangeset)]
 #[diesel(table_name = crate::schema::users)]
@@ -27,13 +27,14 @@ impl actix_web::FromRequest for UserClaims {
         let req = req.clone();
 
         Box::pin(async move {
-            let token = req.cookie("jwt")
+            let token = req
+                .cookie("jwt")
                 .ok_or(ResponseError::new(
                     "JSON Web token not found",
                     "Invalid Session",
                     LogLevel::Information,
-                    StatusCode::UNAUTHORIZED)
-                )?
+                    StatusCode::UNAUTHORIZED,
+                ))?
                 .value()
                 .to_owned();
 
@@ -45,13 +46,14 @@ impl actix_web::FromRequest for UserClaims {
 
             let database = &mut *state.connect_database();
 
-            let user_claims: Self = users::table.inner_join(sessions::table)
+            let user_claims: Self = users::table
+                .inner_join(sessions::table)
                 .filter(sessions::id.eq(jwtc.session_id))
                 .select((users::id, users::assigned_role))
-                .get_result(database).unwrap();
+                .get_result(database)
+                .unwrap();
 
             Ok(user_claims)
         })
     }
-
 }
