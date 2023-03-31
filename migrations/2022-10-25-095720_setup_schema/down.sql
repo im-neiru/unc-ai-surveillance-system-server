@@ -4,4 +4,4 @@ DROP TABLE IF EXISTS protocol_violations;
 DROP TABLE IF EXISTS area;
 DROP TABLE IF EXISTS sessions;
 DROP TABLE IF EXISTS users;
-DROP USER IF EXISTS unc_client;
+-- DROP USER IF EXISTS unc_client;

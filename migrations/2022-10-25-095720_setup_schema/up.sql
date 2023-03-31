@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE USER unc_client WITH PASSWORD 'g1PxL1Lyvd8YqZ0U2x';
+-- CREATE USER unc_client WITH PASSWORD 'g1PxL1Lyvd8YqZ0U2x';
 
 -- Create tables
 CREATE TABLE users(
@@ -36,8 +36,20 @@ CREATE TABLE area(
     PRIMARY KEY(code)
 );
 
+CREATE TABLE protocol_violations(
+    id uuid DEFAULT uuid_generate_v4(),
+    personnel_id uuid NOT NULL REFERENCES users(id),
+    area_code VARCHAR(10) NOT NULL REFERENCES area(code),
+    category SMALLINT NOT NULL CHECK(category IN (1, 2)),
+    date_time TIMESTAMP NOT NULL,
+    image_bytes BYTEA NOT NULL,
+
+    PRIMARY KEY(id)
+);
+
 CREATE TABLE protocol_violators(
     id uuid DEFAULT uuid_generate_v4(),
+    violation uuid NOT NULL REFERENCES protocol_violations(id),
     first_name VARCHAR(48) NOT NULL,
     last_name VARCHAR(48) NOT NULL,
     category VARCHAR(8) NOT NULL CHECK(category IN ('student', 'visitor', 'faculty', 'staff')),
@@ -45,18 +57,9 @@ CREATE TABLE protocol_violators(
     PRIMARY KEY(id)
 );
 
-CREATE TABLE protocol_violations(
-    id uuid DEFAULT uuid_generate_v4(),
-    personnel_id uuid NOT NULL REFERENCES users(id),
-    date_time TIMESTAMP NOT NULL,
-    area_code VARCHAR(10) NOT NULL REFERENCES area(code),
-    category SMALLINT NOT NULL CHECK(category IN (1, 2)),
-
-    PRIMARY KEY(id)
-);
-
 CREATE TABLE cameras(
     id integer NOT NULL,
+    area_code VARCHAR(10) NOT NULL REFERENCES area(code),
     camera_url VARCHAR(512) NOT NULL,
     
     PRIMARY KEY(id)

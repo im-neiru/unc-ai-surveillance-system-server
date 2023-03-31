@@ -10,6 +10,7 @@ diesel::table! {
 diesel::table! {
     cameras (id) {
         id -> Int4,
+        area_code -> Varchar,
         camera_url -> Varchar,
     }
 }
@@ -18,15 +19,17 @@ diesel::table! {
     protocol_violations (id) {
         id -> Uuid,
         personnel_id -> Uuid,
-        date_time -> Timestamp,
         area_code -> Varchar,
         category -> Int2,
+        date_time -> Timestamp,
+        image_bytes -> Bytea,
     }
 }
 
 diesel::table! {
     protocol_violators (id) {
         id -> Uuid,
+        violation -> Uuid,
         first_name -> Varchar,
         last_name -> Varchar,
         category -> Varchar,
@@ -57,8 +60,10 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(cameras -> area (area_code));
 diesel::joinable!(protocol_violations -> area (area_code));
 diesel::joinable!(protocol_violations -> users (personnel_id));
+diesel::joinable!(protocol_violators -> protocol_violations (violation));
 diesel::joinable!(sessions -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
