@@ -1,7 +1,7 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    area (code) {
+    areas (code) {
         code -> Varchar,
         name -> Varchar,
     }
@@ -60,14 +60,14 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(cameras -> area (area_code));
-diesel::joinable!(protocol_violations -> area (area_code));
+diesel::joinable!(cameras -> areas (area_code));
+diesel::joinable!(protocol_violations -> areas (area_code));
 diesel::joinable!(protocol_violations -> users (personnel_id));
 diesel::joinable!(protocol_violators -> protocol_violations (violation));
 diesel::joinable!(sessions -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
-    area,
+    areas,
     cameras,
     protocol_violations,
     protocol_violators,
