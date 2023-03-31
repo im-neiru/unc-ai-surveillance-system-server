@@ -1,3 +1,4 @@
+use actix_web::http::StatusCode;
 use actix_web::web;
 use actix_web::HttpResponse;
 use actix_web::Responder;
@@ -7,6 +8,7 @@ use diesel::RunQueryDsl;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::logging::LogLevel;
 use crate::models::AreaInsert;
 use crate::models::AreaSelect;
 use crate::{
@@ -25,7 +27,7 @@ pub(crate) struct AssignRequest {
     #[serde(alias = "user-id")]
     pub(crate) user_id: uuid::Uuid,
     #[serde(alias = "area-code")]
-    pub(crate) area_code: String,
+    pub(crate) area_code: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -83,13 +85,37 @@ async fn patch_assign(
     if user.assigned_role != UserRole::SecurityHead {
         return Err(crate::logging::ResponseError::unauthorized(user));
     }
-
     let mut connection = state.connect_database();
+
+    let role: UserRole = users
+        .filter(id.eq(request.user_id))
+        .select(assigned_role)
+        .get_result(&mut connection)
+        .or(Err(crate::logging::ResponseError::new(
+            "Failed to find user",
+            "User does not exists",
+            LogLevel::Information,
+            StatusCode::NOT_ACCEPTABLE,
+        )))?;
+
+    if role != UserRole::SecurityGuard {
+        return Err(crate::logging::ResponseError::new(
+            "Invalid user role",
+            "User must be a security guard",
+            LogLevel::Information,
+            StatusCode::NOT_ACCEPTABLE,
+        ));
+    }
 
     diesel::update(users.filter(id.eq(request.user_id)))
         .set(assigned_area.eq(&request.area_code))
         .execute(&mut connection)
-        .unwrap();
+        .or(Err(crate::logging::ResponseError::new(
+            "Failed to assign user",
+            "Failed to assign user",
+            LogLevel::Information,
+            StatusCode::NOT_ACCEPTABLE,
+        )))?;
 
     Ok(HttpResponse::Ok())
 }
