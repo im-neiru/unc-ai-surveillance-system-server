@@ -29,7 +29,7 @@ CREATE TABLE sessions(
     UNIQUE(device_hash)
 );
 
-CREATE TABLE area(
+CREATE TABLE areas(
     code VARCHAR(10) NOT NULL,
     name VARCHAR(128) NOT NULL,
 
@@ -39,7 +39,7 @@ CREATE TABLE area(
 CREATE TABLE protocol_violations(
     id uuid DEFAULT uuid_generate_v4(),
     personnel_id uuid NOT NULL REFERENCES users(id),
-    area_code VARCHAR(10) NOT NULL REFERENCES area(code),
+    area_code VARCHAR(10) NOT NULL REFERENCES areas(code),
     category SMALLINT NOT NULL CHECK(category IN (1, 2)),
     date_time TIMESTAMP NOT NULL,
     image_bytes BYTEA NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE protocol_violators(
 
 CREATE TABLE cameras(
     id integer NOT NULL,
-    area_code VARCHAR(10) NOT NULL REFERENCES area(code),
+    area_code VARCHAR(10) NOT NULL REFERENCES areas(code),
     camera_url VARCHAR(512) NOT NULL,
     
     PRIMARY KEY(id)
@@ -87,7 +87,7 @@ GRANT
 
 GRANT
     SELECT, INSERT, UPDATE 
-    ON area TO unc_client;
+    ON areas TO unc_client;
 
 GRANT
     SELECT, INSERT, UPDATE 
