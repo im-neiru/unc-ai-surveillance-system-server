@@ -57,6 +57,7 @@ diesel::table! {
         last_name -> Varchar,
         password_hash -> Bytea,
         assigned_role -> Int2,
+        assigned_area -> Nullable<Varchar>,
     }
 }
 
@@ -65,6 +66,7 @@ diesel::joinable!(protocol_violations -> areas (area_code));
 diesel::joinable!(protocol_violations -> users (personnel_id));
 diesel::joinable!(protocol_violators -> protocol_violations (violation));
 diesel::joinable!(sessions -> users (user_id));
+diesel::joinable!(users -> areas (assigned_area));
 
 diesel::allow_tables_to_appear_in_same_query!(
     areas,
