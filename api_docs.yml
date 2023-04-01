@@ -24,7 +24,7 @@ paths:
       security:
         - jwt: ["json web token"]
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -52,7 +52,7 @@ paths:
                 id: d6ab56e9-52d1-4609-9aad-40595e57eed4
                 first-name: Rio
                 username: rio
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
@@ -91,7 +91,7 @@ paths:
               device-name: "Asus ROG Zephyrus M16"
               device-signature: "4b44829fa912965a"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -101,7 +101,7 @@ paths:
                   jwt:
                     type: string
                     description: The json web token
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
@@ -111,7 +111,7 @@ paths:
                   message:
                     type: string
                     description: Error message
-      
+
   /users/register:
     post:
       summary: Get information of current user
@@ -122,33 +122,33 @@ paths:
       requestBody:
         required: true
         content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  username:
-                    type: string
-                    description: The username
-                  first-name:
-                    type: string
-                    description: The user's first-name
-                  last-name:
-                    type: string
-                    description: The user's last-name
-                  password:
-                    type: string
-                    description: The user's last-name
-                  assigned-role:
-                    type: integer
-                    description: 1 = Security Guard, 2 = Security Head, 3 = Administrator
-              example:
-                assigned-role: 1
-                last-name: LeBlanc
-                password: Arcon#123
-                first-name: Rio
-                username: rio
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: The username
+                first-name:
+                  type: string
+                  description: The user's first-name
+                last-name:
+                  type: string
+                  description: The user's last-name
+                password:
+                  type: string
+                  description: The user's last-name
+                assigned-role:
+                  type: integer
+                  description: 1 = Security Guard, 2 = Security Head, 3 = Administrator
+            example:
+              assigned-role: 1
+              last-name: LeBlanc
+              password: Arcon#123
+              first-name: Rio
+              username: rio
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -160,7 +160,7 @@ paths:
                     description: The user's ID
               example:
                 id: d6ab56e9-52d1-4609-9aad-40595e57eed4
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
@@ -170,7 +170,7 @@ paths:
                   message:
                     type: string
                     description: Error message
-        '409':
+        "409":
           description: Conflict
           content:
             application/json:
@@ -182,7 +182,7 @@ paths:
                     description: Error message
                 example:
                   message: "Username taken"
-        '500':
+        "500":
           description: Internal Server Error
           content:
             application/json:
@@ -204,31 +204,31 @@ paths:
       requestBody:
         required: true
         content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  properties:
-                    id:
-                      type: string
-                      description: The user's id
-                    first-name:
-                      type: string
-                      description: The user's first-name
-                    last-name:
-                      type: string
-                      description: The user's last-name
-              example:
-                - id: 1552f5ec-c2cc-47b7-bed5-761c0361960d,
-                  last-name: LeBlanc,
-                  first-name: Funk"
+          application/json:
+            schema:
+              type: array
+              items:
+                properties:
+                  id:
+                    type: string
+                    description: The user's id
+                  first-name:
+                    type: string
+                    description: The user's first-name
+                  last-name:
+                    type: string
+                    description: The user's last-name
+            example:
+              - id: 1552f5ec-c2cc-47b7-bed5-761c0361960d,
+                last-name: LeBlanc,
+                first-name: Funk"
 
-                - id: 1552f5ec-c2cc-47b7-bed5-761c0361920d,
-                  last-name: Uzumaki,
-                  first-name: Goku"
+              - id: 1552f5ec-c2cc-47b7-bed5-761c0361920d,
+                last-name: Uzumaki,
+                first-name: Goku"
 
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -240,7 +240,7 @@ paths:
                     description: The user's ID
               example:
                 id: d6ab56e9-52d1-4609-9aad-40595e57eed4
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
@@ -251,48 +251,48 @@ paths:
                     type: string
                     description: Error message
   /areas/list:
-      get:
-        summary: Get all areas
-        tags:
+    get:
+      summary: Get all areas
+      tags:
         - Areas
-        security:
-          - jwt: ["json web token"]
-        parameters:
-          - name: count-guards
-            in: query
-            description: Returns including count
-            required: false
-            schema:
-              type: boolean
-              nullable: true
-              default: false
-        responses:
-          '200':
-            description: OK
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    properties:
-                      code:
-                        type: string
-                        description: The area's code
-                      name:
-                        type: string
-                        description: The area's name
-                      guard-count:
-                        type: integer
-                        nullable: true
-                examples:
-                  'count-guards=false|null':
-                    value:
+      security:
+        - jwt: ["json web token"]
+      parameters:
+        - name: count-guards
+          in: query
+          description: Returns including count
+          required: false
+          schema:
+            type: boolean
+            nullable: true
+            default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    code:
+                      type: string
+                      description: The area's code
+                    name:
+                      type: string
+                      description: The area's name
+                    guard-count:
+                      type: integer
+                      nullable: true
+              examples:
+                "count-guards=false|null":
+                  value:
                     - code: JH-01
                       name: JH Hallway 1
                     - code: JH-02
                       name: JH Hallway 2
-                  count-guards=true:
-                    value:
+                count-guards=true:
+                  value:
                     - code: JH-01
                       name: JH Hallway 1
                       guard-count: 2,
@@ -300,250 +300,109 @@ paths:
                       name: JH Hallway 2
                       guard-count: 5,
 
-          '401':
-            description: Unauthorized
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-                      description: Error message
-  /areas/create:
-      post:
-        summary: Create area
-        tags:
-        - Areas
-        security:
-          - jwt: ["json web token"]
-    
-        responses:
-          '200':
-            description: OK
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    properties:
-                      code:
-                        type: string
-                        description: The area's code
-                      name:
-                        type: string
-                        description: The area's name
-                example:
-                  items:
-                    - code: JH-01
-                      name: JH Hallway 1
-                    - code: JH-02
-                      name: JH Hallway 2
-          '401':
-            description: Unauthorized
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-                      description: Error message
-  /areas/assign:
-      patch:
-        summary: Assign guard to area
-        tags:
-        - Areas
-        security:
-          - jwt: ["json web token"]
-        requestBody:
+        "401":
+          description: Unauthorized
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  user-id: 
+                  message:
                     type: string
-                  area-code:
-                    type: string
-                    nullable: true
-              examples:
-                assign to area:
-                  value:
-                    area-code: "GT2"
-                    user-id: "e863187f-f093-48f8-8f2e-68f1c2b6ceb7"
-                unassign:
-                  value:
-                    user-id: "e863187f-f093-48f8-8f2e-68f1c2b6ceb7"
-        responses:
-          '200':
-            description: OK
-          '401':
-            description: Unauthorized
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-                      description: Error message
-  /violations/unidentified:
-      get:
-        summary: Retrieve all unidentified violators
-        tags:
-        - Violations
-        security:
-          - jwt: ["json web token"]
-        responses:
-          '200':
-            description: OK
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    properties:
-                      id:
-                        type: string
-                      area-code:
-                        type: string
-                      violation-kind:
-                        type: integer
-                        description: "1 = Facemask Violation, 2 = Foot Traffic"
-                      date-time:
-                        type: string
-                        description: "Date and Time in UTC"
-                example:
-                    id: "3aed09ed-a1b0-4da6-8338-103e64798386"
-                    area-code: "GT2"
-                    violation-kind: 1
-                    date-time: "2023-04-01T14:23:09.850544"
-          '401':
-            description: Unauthorized
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-                      description: Error message
-  /violations/identified:
-      get:
-        summary: Retrieve all identified violators
-        tags:
-        - Violations
-        security:
-          - jwt: ["json web token"]
-        parameters:
-          - name: area-code
-            in: query
-            description: Area Code (Optional)
-            required: false
-            schema:
-              type: string
-              nullable: true
-            example:
-              "JH-03"
-        responses:
-          '200':
-            description: OK
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    properties:
-                      id:
-                        type: string
-                      area-code:
-                        type: string
-                      violation-kind:
-                        type: integer
-                        description: "1 = Facemask Violation, 2 = Foot Traffic"
-                      date-time:
-                        type: string
-                        description: "Date and Time in UTC"
-                      first-name:
-                        type: string
-                      last-name:
-                        type: string
-                      category:
-                        type: integer
-                        description: "Student = 1, Visitor = 2, Faculty = 3, Staff = 4"
-                example:
-                  - violation-id: "3aed09ed-a1b0-4da6-8338-103e64798386"
-                    area-code: "GT2"
-                    violation-kind: 1
-                    date-time: "2011-07-01 06:30:30+00"
-                    personnel-id: "d6da2834-6236-4ac2-b3ed-9e1413cccab9"
-                    first-name: Jane
-                    last-name: Doe,
-                    category: 2
-          '401':
-            description: Unauthorized
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-                      description: Error message
-  /violations/image:
-      post:
-        summary: Retrieve the violators image in jpeg
-        tags:
-        - Violations
-        security:
-          - jwt: ["json web token"]
-        parameters:
-          - name: id
-            in: query
-            description: Violation ID
-            required: true
-            schema:
-              type: string
-              nullable: true
-              default: false
-            example:
-              "5ca126b1-ce37-4bf5-b7d2-0ca11ad7e19a"
-        responses:
-          '200':
-            description: OK
-            content:
-              image/jpeg:
-                schema:
-                  format: binary
-                example:
-                  "no example its jpeg"
-
-          '404':
-            description: Unauthorized
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-                      description: Error message
-          '401':
-            description: Not Found
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    message:
-                      type: string
-                      description: Error message
-  /violation/record:
-    patch:
-      summary: Record details of violators (Can be use to modify)
+                    description: Error message
+  /areas/create:
+    post:
+      summary: Create area
       tags:
-      - Violations
+        - Areas
+      security:
+        - jwt: ["json web token"]
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    code:
+                      type: string
+                      description: The area's code
+                    name:
+                      type: string
+                      description: The area's name
+              example:
+                items:
+                  - code: JH-01
+                    name: JH Hallway 1
+                  - code: JH-02
+                    name: JH Hallway 2
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+  /areas/remove:
+    delete:
+      summary: Remove area
+      tags:
+        - Areas
+      security:
+        - jwt: ["json web token"]
+      parameters:
+        - name: area-code
+          in: query
+          description: Area Code
+          required: true
+          schema:
+            type: string
+            nullable: false
+          example: "AMS-03"
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+  /areas/assign:
+    patch:
+      summary: Assign guard to area
+      tags:
+        - Areas
       security:
         - jwt: ["json web token"]
       requestBody:
@@ -552,7 +411,194 @@ paths:
             schema:
               type: object
               properties:
-                violation-id: 
+                user-id:
+                  type: string
+                area-code:
+                  type: string
+                  nullable: true
+            examples:
+              assign to area:
+                value:
+                  area-code: "GT2"
+                  user-id: "e863187f-f093-48f8-8f2e-68f1c2b6ceb7"
+              unassign:
+                value:
+                  user-id: "e863187f-f093-48f8-8f2e-68f1c2b6ceb7"
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+  /violations/unidentified:
+    get:
+      summary: Retrieve all unidentified violators
+      tags:
+        - Violations
+      security:
+        - jwt: ["json web token"]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    id:
+                      type: string
+                    area-code:
+                      type: string
+                    violation-kind:
+                      type: integer
+                      description: "1 = Facemask Violation, 2 = Foot Traffic"
+                    date-time:
+                      type: string
+                      description: "Date and Time in UTC"
+              example:
+                id: "3aed09ed-a1b0-4da6-8338-103e64798386"
+                area-code: "GT2"
+                violation-kind: 1
+                date-time: "2023-04-01T14:23:09.850544"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+  /violations/identified:
+    get:
+      summary: Retrieve all identified violators
+      tags:
+        - Violations
+      security:
+        - jwt: ["json web token"]
+      parameters:
+        - name: area-code
+          in: query
+          description: Area Code (Optional)
+          required: false
+          schema:
+            type: string
+            nullable: true
+          example: "JH-03"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    id:
+                      type: string
+                    area-code:
+                      type: string
+                    violation-kind:
+                      type: integer
+                      description: "1 = Facemask Violation, 2 = Foot Traffic"
+                    date-time:
+                      type: string
+                      description: "Date and Time in UTC"
+                    first-name:
+                      type: string
+                    last-name:
+                      type: string
+                    category:
+                      type: integer
+                      description: "Student = 1, Visitor = 2, Faculty = 3, Staff = 4"
+              example:
+                - violation-id: "3aed09ed-a1b0-4da6-8338-103e64798386"
+                  area-code: "GT2"
+                  violation-kind: 1
+                  date-time: "2011-07-01 06:30:30+00"
+                  personnel-id: "d6da2834-6236-4ac2-b3ed-9e1413cccab9"
+                  first-name: Jane
+                  last-name: Doe,
+                  category: 2
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+  /violations/image:
+    post:
+      summary: Retrieve the violators image in jpeg
+      tags:
+        - Violations
+      security:
+        - jwt: ["json web token"]
+      parameters:
+        - name: id
+          in: query
+          description: Violation ID
+          required: true
+          schema:
+            type: string
+            nullable: true
+            default: false
+          example: "5ca126b1-ce37-4bf5-b7d2-0ca11ad7e19a"
+      responses:
+        "200":
+          description: OK
+          content:
+            image/jpeg:
+              schema:
+                format: binary
+              example: "no example its jpeg"
+
+        "404":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        "401":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+  /violation/record:
+    patch:
+      summary: Record details of violators (Can be use to modify)
+      tags:
+        - Violations
+      security:
+        - jwt: ["json web token"]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                violation-id:
                   type: string
                 last-name:
                   type: string
@@ -562,14 +608,14 @@ paths:
                   type: integer
                   description: "Student = 1, Visitor = 2, Faculty = 3, Staff = 4"
             example:
-                violation-id: "e863187f-f093-48f8-8f2e-68f1c2b6ceb7"
-                first-name: John
-                last-name: Doe
-                category: 1
+              violation-id: "e863187f-f093-48f8-8f2e-68f1c2b6ceb7"
+              first-name: John
+              last-name: Doe
+              category: 1
       responses:
-        '200':
+        "200":
           description: OK
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
