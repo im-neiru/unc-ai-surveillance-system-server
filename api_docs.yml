@@ -118,6 +118,34 @@ paths:
         - Users
       security:
         - jwt: ["json web token"]
+      requestBody:
+        required: true
+        content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    description: The username
+                  first-name:
+                    type: string
+                    description: The user's first-name
+                  last-name:
+                    type: string
+                    description: The user's last-name
+                  password:
+                    type: string
+                    description: The user's last-name
+                  assigned-role:
+                    type: integer
+                    description: 1 = Security Guard, 2 = Security Head, 3 = Administrator
+              example:
+                assigned-role: 1
+                last-name: LeBlanc
+                password: Arcon#123
+                first-name: Rio
+                username: rio
       responses:
         '200':
           description: OK
@@ -129,24 +157,8 @@ paths:
                   id:
                     type: string
                     description: The user's ID
-                  username:
-                    type: string
-                    description: The username
-                  first-name:
-                    type: string
-                    description: The user's first-name
-                  last-name:
-                    type: string
-                    description: The user's last-name
-                  assigned-role:
-                    type: integer
-                    description: 1 = Security Guard, 2 = Security Head, 3 = Administrator
               example:
-                assigned-role: 1
-                last-name: LeBlanc
                 id: d6ab56e9-52d1-4609-9aad-40595e57eed4
-                first-name: Rio
-                username: rio
         '401':
           description: Unauthorized
           content:
