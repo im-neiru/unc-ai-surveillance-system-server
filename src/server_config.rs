@@ -18,7 +18,7 @@ impl ServerConfig {
                     .expect("Invalid ACTIX_PORT")
             },
             database_url: {
-                std::env::var("DB_FOR_CLIENT_URL").expect("Please set env: DB_FOR_CLIENT_URL")
+                std::env::var("CLIENT_DB_URL").expect("Please set env: DB_FOR_CLIENT_URL")
             },
         }
     }
