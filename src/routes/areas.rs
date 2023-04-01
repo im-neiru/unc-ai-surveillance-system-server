@@ -39,11 +39,6 @@ struct CreateAreaOk {
     pub(crate) code: String,
 }
 
-#[derive(Serialize)]
-struct ListAreaOk<A: Serialize> {
-    pub(crate) areas: Vec<A>,
-}
-
 #[derive(Debug, Deserialize)]
 struct ListQuery {
     #[serde(alias = "count-guards")]
@@ -70,14 +65,14 @@ async fn get_list(
             ))
             .load::<AreaGuardCount>(&mut connection)
             .unwrap();
-        Ok(serde_json::to_string(&ListAreaOk { areas: list })
+        Ok(serde_json::to_string(&list)
             .unwrap()
             .customize()
             .with_status(StatusCode::OK))
     }
     else {
-        let area_list: Vec<AreaSelect> = areas::table.get_results(&mut connection).unwrap();
-        Ok(serde_json::to_string(&ListAreaOk { areas: area_list })
+        let list: Vec<AreaSelect> = areas::table.get_results(&mut connection).unwrap();
+        Ok(serde_json::to_string(&list)
             .unwrap()
             .customize()
             .with_status(StatusCode::OK))
