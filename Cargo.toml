@@ -21,7 +21,7 @@ seq-macro = "0.3"
 xxhash-rust = { version = "0.8.6", features = ["xxh3"] }
 aes-gcm = "0.10.1"
 ring = "0.16.20"
-dotenv = "0.15.0"
 image = "0.24.6"
+dotenvy = "0.15.7"
 #wgpu = "0.14.2"
 #opencv = "0.74.2"

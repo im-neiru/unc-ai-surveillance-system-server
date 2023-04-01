@@ -1,4 +1,4 @@
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use std::net::{Ipv4Addr, SocketAddrV4};
 
 pub struct ServerConfig {
