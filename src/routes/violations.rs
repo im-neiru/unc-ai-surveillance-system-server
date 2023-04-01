@@ -1,8 +1,9 @@
 use crate::logging::LogLevel;
-use crate::models::ViolationUnknown;
+use crate::models::{UserRole, ViolationUnknown};
 use crate::{data::AppData, models::UserClaims};
 use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, Responder};
+use diesel::BoolExpressionMethods;
 use diesel::ExpressionMethods;
 use diesel::QueryDsl;
 use diesel::RunQueryDsl;
@@ -10,17 +11,35 @@ use serde::Deserialize;
 
 #[actix_web::get("/unidentified")]
 async fn get_unidentified(
-    (state, _user): (web::Data<AppData>, UserClaims),
+    (state, user): (web::Data<AppData>, UserClaims),
 ) -> super::Result<impl Responder> {
+    use crate::schema::users;
     use crate::schema::violations::dsl::*;
 
     let mut connection = state.connect_database();
+    let mut list = Vec::new();
 
-    let list = violations
-        .filter(identified.eq(false))
-        .select((id, area_code, violation_kind, date_time))
-        .get_results::<ViolationUnknown>(&mut connection)
-        .unwrap();
+    if user.assigned_role == UserRole::SecurityGuard {
+        let assigned_area: Option<String> = users::table
+            .filter(users::id.eq(user.id))
+            .select(users::assigned_area)
+            .first(&mut connection)
+            .unwrap();
+
+        if let Some(area) = assigned_area {
+            list = violations
+                .filter(identified.eq(false).and(area_code.eq(area)))
+                .select((id, area_code, violation_kind, date_time))
+                .get_results::<ViolationUnknown>(&mut connection)
+                .unwrap();
+        }
+    } else {
+        list = violations
+            .filter(identified.eq(false))
+            .select((id, area_code, violation_kind, date_time))
+            .get_results::<ViolationUnknown>(&mut connection)
+            .unwrap();
+    }
 
     Ok(serde_json::to_string(&list)
         .unwrap()
