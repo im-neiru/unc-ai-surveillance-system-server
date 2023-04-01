@@ -389,7 +389,7 @@ paths:
                       type: string
                       description: Error message
   /violations/unidentified:
-      post:
+      get:
         summary: Retrieve all unidentified violators
         tags:
         - Violations
@@ -411,11 +411,76 @@ paths:
                       violation-kind:
                         type: integer
                         description: "1 = Facemask Violation, 2 = Foot Traffic"
+                      date-time:
+                        type: string
+                        description: "Date and Time in UTC"
                 example:
                     id: "3aed09ed-a1b0-4da6-8338-103e64798386"
                     area-code: "GT2"
                     violation-kind: 1
+                    date-time: "2023-04-01T14:23:09.850544"
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      description: Error message
+  /violations/identified:
+      get:
+        summary: Retrieve all identified violators
+        tags:
+        - Violations
+        security:
+          - jwt: ["json web token"]
+        parameters:
+          - name: area-code
+            in: query
+            description: Area Code (Optional)
+            required: false
+            schema:
+              type: string
+              nullable: true
+            example:
+              "JH-03"
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    properties:
+                      id:
+                        type: string
+                      area-code:
+                        type: string
+                      violation-kind:
+                        type: integer
+                        description: "1 = Facemask Violation, 2 = Foot Traffic"
+                      date-time:
+                        type: string
+                        description: "Date and Time in UTC"
+                      first-name:
+                        type: string
+                      last-name:
+                        type: string
+                      category:
+                        type: integer
+                        description: "Student = 1, Visitor = 2, Faculty = 3, Staff = 4"
+                example:
+                  - violation-id: "3aed09ed-a1b0-4da6-8338-103e64798386"
+                    area-code: "GT2"
+                    violation-kind: 1
                     date-time: "2011-07-01 06:30:30+00"
+                    personnel-id: "d6da2834-6236-4ac2-b3ed-9e1413cccab9"
+                    first-name: Jane
+                    last-name: Doe,
+                    category: 2
           '401':
             description: Unauthorized
             content:
@@ -474,3 +539,43 @@ paths:
                     message:
                       type: string
                       description: Error message
+  /violation/record:
+    patch:
+      summary: Record details of violators (Can be use to modify)
+      tags:
+      - Violations
+      security:
+        - jwt: ["json web token"]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                violation-id: 
+                  type: string
+                last-name:
+                  type: string
+                first-name:
+                  type: string
+                category:
+                  type: integer
+                  description: "Student = 1, Visitor = 2, Faculty = 3, Staff = 4"
+            example:
+                violation-id: "e863187f-f093-48f8-8f2e-68f1c2b6ceb7"
+                first-name: John
+                last-name: Doe
+                category: 1
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
