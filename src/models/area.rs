@@ -1,6 +1,10 @@
 use actix_web::http::StatusCode;
-use diesel::{AsChangeset, Insertable, Queryable};
-use serde::Serialize;
+use diesel::{
+    deserialize::FromSqlRow,
+    sql_types::{BigInt, Text},
+    AsChangeset, Insertable, Queryable,
+};
+use serde::{Deserialize, Serialize};
 
 use crate::{logging::LogLevel, routes::areas::CreateAreaRequest};
 
@@ -16,6 +20,26 @@ pub struct AreaInsert {
 pub struct AreaSelect {
     name: String,
     code: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AreaGuardCount {
+    name: String,
+    code: String,
+    #[serde(alias = "guard-count")]
+    guard_count: i64,
+}
+
+impl FromSqlRow<(Text, Text, BigInt), diesel::pg::Pg> for AreaGuardCount {
+    fn build_from_row<'a>(
+        row: &impl diesel::row::Row<'a, diesel::pg::Pg>,
+    ) -> diesel::deserialize::Result<Self> {
+        Ok(Self {
+            name: row.get_value("name")?,
+            code: row.get_value("code")?,
+            guard_count: row.get_value(2)?,
+        })
+    }
 }
 
 impl TryFrom<CreateAreaRequest> for AreaInsert {

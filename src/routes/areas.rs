@@ -2,13 +2,17 @@ use actix_web::http::StatusCode;
 use actix_web::web;
 use actix_web::HttpResponse;
 use actix_web::Responder;
+use diesel::dsl::count;
 use diesel::ExpressionMethods;
+use diesel::JoinOnDsl;
+use diesel::NullableExpressionMethods;
 use diesel::QueryDsl;
 use diesel::RunQueryDsl;
 use serde::Deserialize;
 use serde::Serialize;
 
 use crate::logging::LogLevel;
+use crate::models::AreaGuardCount;
 use crate::models::AreaInsert;
 use crate::models::AreaSelect;
 use crate::{
@@ -36,21 +40,48 @@ struct CreateAreaOk {
 }
 
 #[derive(Serialize)]
-struct ListAreaOk {
-    pub(crate) areas: Vec<AreaSelect>,
+struct ListAreaOk<A: Serialize> {
+    pub(crate) areas: Vec<A>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ListQuery {
+    #[serde(alias = "count-guards")]
+    count_guards: Option<bool>,
 }
 
 #[actix_web::get("/list")]
 async fn get_list(
-    (state, _user): (web::Data<AppData>, UserClaims),
+    (state, _user, query): (web::Data<AppData>, UserClaims, web::Query<ListQuery>),
 ) -> super::Result<impl Responder> {
     use crate::schema::areas;
+    use crate::schema::users;
 
     let mut connection = state.connect_database();
 
-    let area_list: Vec<AreaSelect> = areas::table.get_results(&mut connection).unwrap();
-
-    Ok(web::Json(ListAreaOk { areas: area_list }))
+    if query.count_guards == Some(true) {
+        let list = areas::table
+            .left_join(users::table.on(areas::code.nullable().eq(users::assigned_area)))
+            .group_by((areas::code, areas::name))
+            .select((
+                areas::dsl::code,
+                areas::dsl::name,
+                count(users::dsl::assigned_area.assume_not_null()),
+            ))
+            .load::<AreaGuardCount>(&mut connection)
+            .unwrap();
+        Ok(serde_json::to_string(&ListAreaOk { areas: list })
+            .unwrap()
+            .customize()
+            .with_status(StatusCode::OK))
+    }
+    else {
+        let area_list: Vec<AreaSelect> = areas::table.get_results(&mut connection).unwrap();
+        Ok(serde_json::to_string(&ListAreaOk { areas: area_list })
+            .unwrap()
+            .customize()
+            .with_status(StatusCode::OK))
+    }
 }
 
 #[actix_web::post("/create")]

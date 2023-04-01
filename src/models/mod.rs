@@ -18,4 +18,4 @@ pub use user::UserSelect;
 pub use session::SessionInsert;
 pub use jwt_claims::JwtClaims;
 pub use user_claims::UserClaims;
-pub use area::{AreaInsert, AreaSelect};
+pub use area::{AreaInsert, AreaSelect, AreaGuardCount};
