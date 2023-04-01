@@ -200,6 +200,15 @@ paths:
         - Areas
         security:
           - jwt: ["json web token"]
+        parameters:
+          - name: count-guards
+            in: query
+            description: Returns including count
+            required: false
+            schema:
+              type: boolean
+              nullable: true
+              default: false
         responses:
           '200':
             description: OK
@@ -215,12 +224,25 @@ paths:
                       name:
                         type: string
                         description: The area's name
-                example:
-                  items:
+                      guard-count:
+                        type: integer
+                        nullable: true
+                examples:
+                  'count-guards=false|null':
+                    value:
                     - code: JH-01
                       name: JH Hallway 1
                     - code: JH-02
                       name: JH Hallway 2
+                  count-guards=true:
+                    value:
+                    - code: JH-01
+                      name: JH Hallway 1
+                      guard-count: 2,
+                    - code: JH-02
+                      name: JH Hallway 2
+                      guard-count: 5,
+
           '401':
             description: Unauthorized
             content:
