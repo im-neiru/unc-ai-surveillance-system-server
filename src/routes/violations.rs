@@ -29,6 +29,7 @@ async fn get_unidentified(
         if let Some(area) = assigned_area {
             list = violations
                 .filter(identified.eq(false).and(area_code.eq(area)))
+                .order_by(date_time)
                 .select((id, area_code, violation_kind, date_time))
                 .get_results::<ViolationUnknown>(&mut connection)
                 .unwrap();
@@ -36,6 +37,7 @@ async fn get_unidentified(
     } else {
         list = violations
             .filter(identified.eq(false))
+            .order_by(date_time)
             .select((id, area_code, violation_kind, date_time))
             .get_results::<ViolationUnknown>(&mut connection)
             .unwrap();
