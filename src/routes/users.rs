@@ -13,8 +13,8 @@ use serde_json::json;
 use crate::data::AppData;
 use crate::logging::{LogLevel, ResponseError};
 use crate::models::{
-    DeviceOs, DeviceSignature, JwtClaims, SessionInsert, UserClaims, UserInsert, UserRole,
-    UserSelect,
+    DeviceOs, DeviceSignature, JwtClaims, SessionInsert, UserBasicSelect, UserClaims, UserInsert,
+    UserRole, UserSelect,
 };
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -207,9 +207,33 @@ async fn post_register(
         .with_status(StatusCode::OK))
 }
 
+#[actix_web::get("/unassigned")]
+async fn get_unassigned(
+    (state, user): (web::Data<AppData>, UserClaims),
+) -> super::Result<impl Responder> {
+    use crate::schema::users::dsl::*;
+
+    if user.assigned_role == UserRole::SecurityGuard {
+        return Err(crate::logging::ResponseError::unauthorized(user));
+    }
+
+    let mut connection = state.connect_database();
+
+    let guards = users
+        .filter(assigned_area.is_null())
+        .select((id, first_name, last_name))
+        .load::<UserBasicSelect>(&mut connection)
+        .unwrap();
+
+    Ok(serde_json::to_string(&guards)
+        .customize()
+        .with_status(StatusCode::OK))
+}
+
 pub fn scope() -> actix_web::Scope {
     web::scope("/users")
         .service(post_login)
         .service(get_current)
         .service(post_register)
+        .service(get_unassigned)
 }

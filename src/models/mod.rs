@@ -15,6 +15,7 @@ pub use device_signature::DeviceSignature;
 
 pub use user::UserInsert;
 pub use user::UserSelect;
+pub use user::UserBasicSelect;
 pub use session::SessionInsert;
 pub use jwt_claims::JwtClaims;
 pub use user_claims::UserClaims;
