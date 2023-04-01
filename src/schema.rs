@@ -51,7 +51,7 @@ diesel::table! {
         personnel_id -> Nullable<Uuid>,
         first_name -> Nullable<Varchar>,
         last_name -> Nullable<Varchar>,
-        category -> Nullable<Varchar>,
+        category -> Nullable<Int2>,
     }
 }
 

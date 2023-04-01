@@ -1,5 +1,4 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- CREATE USER unc_client WITH PASSWORD 'g1PxL1Lyvd8YqZ0U2x';
 -- Create tables
 CREATE TABLE areas(
@@ -7,7 +6,6 @@ CREATE TABLE areas(
     name VARCHAR(128) NOT NULL,
     PRIMARY KEY(code)
 );
-
 CREATE TABLE users(
     id uuid DEFAULT uuid_generate_v4(),
     username VARCHAR(24) NOT NULL,
@@ -19,7 +17,6 @@ CREATE TABLE users(
     PRIMARY KEY (id),
     UNIQUE(username)
 );
-
 CREATE TABLE sessions(
     id uuid DEFAULT uuid_generate_v4(),
     user_id uuid NOT NULL REFERENCES users(id),
@@ -32,7 +29,6 @@ CREATE TABLE sessions(
     PRIMARY KEY(id),
     UNIQUE(device_hash)
 );
-
 CREATE TABLE violations(
     id uuid DEFAULT uuid_generate_v4(),
     area_code VARCHAR(10) NOT NULL REFERENCES areas(code),
@@ -43,88 +39,51 @@ CREATE TABLE violations(
     personnel_id uuid REFERENCES users(id),
     first_name VARCHAR(48),
     last_name VARCHAR(48),
-    category VARCHAR(8) CHECK(
-        category IN ('student', 'visitor', 'faculty', 'staff')
-    ),
+    category SMALLINT CHECK(category IN (1, 2, 3, 4)),
     PRIMARY KEY(id)
 );
-
 CREATE TABLE cameras(
     id integer NOT NULL,
     area_code VARCHAR(10) NOT NULL REFERENCES areas(code),
     camera_url VARCHAR(512) NOT NULL,
     PRIMARY KEY(id)
 );
-
 -- Sample users
-DO $$ DECLARE password_argon2 BYTEA := decode(
-    'kP/piFX/pcdVCl+eId23LQQX3GbYcgSsgWI0/eBNbJ8PMgq1p371HL0QIKlHKe3IDRWSKypIbIvk9wWwJHvsRg==',
-    'base64'
-);
-
+DO $$
+DECLARE password_argon2 BYTEA := decode(
+        'kP/piFX/pcdVCl+eId23LQQX3GbYcgSsgWI0/eBNbJ8PMgq1p371HL0QIKlHKe3IDRWSKypIbIvk9wWwJHvsRg==',
+        'base64'
+    );
 BEGIN
-INSERT INTO
-    users(
+INSERT INTO users(
         username,
         first_name,
         last_name,
         password_hash,
         assigned_role
     )
-VALUES
-    ('vladimir', 'Vlad', 'Tepes', password_argon2, 1),
+VALUES ('vladimir', 'Vlad', 'Tepes', password_argon2, 1),
     ('rio', 'Rio', 'LeBlanc', password_argon2, 2),
     ('admin', 'Lien', 'Walker', password_argon2, 3);
-
 END $$;
-
 -- Sample areas
-INSERT INTO
-    areas(code, name)
-VALUES
-    ('GT2', 'Secondary gate');
-
-INSERT INTO
-    areas(code, name)
-VALUES
-    ('GT1', 'Primary gate');
-
+INSERT INTO areas(code, name)
+VALUES ('GT2', 'Secondary gate');
+INSERT INTO areas(code, name)
+VALUES ('GT1', 'Primary gate');
 -- Configure privileges
-GRANT
-SELECT
-,
-INSERT
-,
-UPDATE
-    ON users TO unc_client;
-
-GRANT
-SELECT
-,
-INSERT
-,
-UPDATE
-    ON sessions TO unc_client;
-
-GRANT
-SELECT
-,
-INSERT
-,
-UPDATE
-    ON areas TO unc_client;
-GRANT
-SELECT
-,
-INSERT
-,
-UPDATE
-    ON violations TO unc_client;
-
-GRANT
-SELECT
-,
-INSERT
-,
-UPDATE
-    ON cameras TO unc_client;
+GRANT SELECT,
+    INSERT,
+    UPDATE ON users TO unc_client;
+GRANT SELECT,
+    INSERT,
+    UPDATE ON sessions TO unc_client;
+GRANT SELECT,
+    INSERT,
+    UPDATE ON areas TO unc_client;
+GRANT SELECT,
+    INSERT,
+    UPDATE ON violations TO unc_client;
+GRANT SELECT,
+    INSERT,
+    UPDATE ON cameras TO unc_client;
