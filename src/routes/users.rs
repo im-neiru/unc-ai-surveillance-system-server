@@ -5,6 +5,7 @@ use actix_web::{post, web};
 use chrono::Utc;
 use diesel::r2d2::{ConnectionManager, PooledConnection};
 use diesel::result::DatabaseErrorKind;
+use diesel::BoolExpressionMethods;
 use diesel::{ExpressionMethods, OptionalExtension, PgConnection, QueryDsl, RunQueryDsl};
 
 use serde::{Deserialize, Serialize};
@@ -220,7 +221,11 @@ async fn get_unassigned(
     let mut connection = state.connect_database();
 
     let guards = users
-        .filter(assigned_area.is_null())
+        .filter(
+            assigned_area
+                .is_null()
+                .and(assigned_role.eq(UserRole::SecurityGuard)),
+        )
         .select((id, first_name, last_name))
         .load::<UserBasicSelect>(&mut connection)
         .unwrap();
