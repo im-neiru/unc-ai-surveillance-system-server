@@ -169,6 +169,30 @@ paths:
                   message:
                     type: string
                     description: Error message
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+                example:
+                  message: "Username taken"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+                example:
+                  message: "Failed to register user"
   /areas/list:
       get:
         summary: Get all areas
