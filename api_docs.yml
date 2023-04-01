@@ -1,0 +1,275 @@
+openapi: 3.0.0
+info:
+  title: UNC AI Surveillance API
+  version: 0.0.1
+components:
+  securitySchemes:
+    jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags:
+  - name: Users
+    description: Operations related to users
+  - name: Areas
+    description: Operations related to areas
+
+paths:
+  /users/current:
+    get:
+      summary: Get information of current user
+      tags:
+        - Users
+      security:
+        - jwt: ["json web token"]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The user's ID
+                  username:
+                    type: string
+                    description: The username
+                  first-name:
+                    type: string
+                    description: The user's first-name
+                  last-name:
+                    type: string
+                    description: The user's last-name
+                  assigned-role:
+                    type: integer
+                    description: 1 = Security Guard, 2 = Security Head, 3 = Administrator
+              example:
+                assigned-role: 1
+                last-name: LeBlanc
+                id: d6ab56e9-52d1-4609-9aad-40595e57eed4
+                first-name: Rio
+                username: rio
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+  /users/login:
+    post:
+      summary: Login user
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                device-os:
+                  type: string
+                device-signature:
+                  type: string
+                device-name:
+                  type: string
+            example:
+              username: "admin"
+              password: "Arcon#123"
+              device-os: "windows"
+              device-name: "Asus ROG Zephyrus M16"
+              device-signature: "4b44829fa912965a"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jwt:
+                    type: string
+                    description: The json web token
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+      
+  /users/create:
+    post:
+      summary: Get information of current user
+      tags:
+        - Users
+      security:
+        - jwt: ["json web token"]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The user's ID
+                  username:
+                    type: string
+                    description: The username
+                  first-name:
+                    type: string
+                    description: The user's first-name
+                  last-name:
+                    type: string
+                    description: The user's last-name
+                  assigned-role:
+                    type: integer
+                    description: 1 = Security Guard, 2 = Security Head, 3 = Administrator
+              example:
+                assigned-role: 1
+                last-name: LeBlanc
+                id: d6ab56e9-52d1-4609-9aad-40595e57eed4
+                first-name: Rio
+                username: rio
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+  /areas/list:
+      get:
+        summary: Get all areas
+        tags:
+        - Areas
+        security:
+          - jwt: ["json web token"]
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    properties:
+                      code:
+                        type: string
+                        description: The area's code
+                      name:
+                        type: string
+                        description: The area's name
+                example:
+                  items:
+                    - code: JH-01
+                      name: JH Hallway 1
+                    - code: JH-02
+                      name: JH Hallway 2
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      description: Error message
+  /areas/create:
+      post:
+        summary: Get all areas
+        tags:
+        - Areas
+        security:
+          - jwt: ["json web token"]
+    
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    properties:
+                      code:
+                        type: string
+                        description: The area's code
+                      name:
+                        type: string
+                        description: The area's name
+                example:
+                  items:
+                    - code: JH-01
+                      name: JH Hallway 1
+                    - code: JH-02
+                      name: JH Hallway 2
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      description: Error message
+  /areas/assign:
+      patch:
+        summary: Assign guard to area
+        tags:
+        - Areas
+        security:
+          - jwt: ["json web token"]
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user-id: 
+                    type: string
+                  area-code:
+                    type: string
+                    nullable: true
+              examples:
+                assign to area:
+                  value:
+                    area-code: "GT2"
+                    user-id: "e863187f-f093-48f8-8f2e-68f1c2b6ceb7"
+                unassign:
+                  value:
+                    user-id: "e863187f-f093-48f8-8f2e-68f1c2b6ceb7"
+        responses:
+          '200':
+            description: OK
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      description: Error message
