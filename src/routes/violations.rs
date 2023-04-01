@@ -67,7 +67,9 @@ async fn get_identified(
 
     let mut connection = state.connect_database();
 
-    if user.assigned_role == UserRole::SecurityGuard {}
+    if user.assigned_role == UserRole::SystemAdmin {
+        return Err(crate::logging::ResponseError::unauthorized(user));
+    }
 
     let list = match query.area_code.clone() {
         Some(area) => violations
