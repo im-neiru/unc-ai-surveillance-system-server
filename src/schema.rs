@@ -16,27 +16,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    protocol_violations (id) {
-        id -> Uuid,
-        personnel_id -> Uuid,
-        area_code -> Varchar,
-        category -> Int2,
-        date_time -> Timestamp,
-        image_bytes -> Bytea,
-    }
-}
-
-diesel::table! {
-    protocol_violators (id) {
-        id -> Uuid,
-        violation -> Uuid,
-        first_name -> Varchar,
-        last_name -> Varchar,
-        category -> Varchar,
-    }
-}
-
-diesel::table! {
     sessions (id) {
         id -> Uuid,
         user_id -> Uuid,
@@ -61,18 +40,31 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    violations (id) {
+        id -> Uuid,
+        personnel_id -> Uuid,
+        area_code -> Varchar,
+        violation_kind -> Int2,
+        date_time -> Timestamp,
+        image_bytes -> Bytea,
+        identified -> Bool,
+        first_name -> Nullable<Varchar>,
+        last_name -> Nullable<Varchar>,
+        category -> Nullable<Varchar>,
+    }
+}
+
 diesel::joinable!(cameras -> areas (area_code));
-diesel::joinable!(protocol_violations -> areas (area_code));
-diesel::joinable!(protocol_violations -> users (personnel_id));
-diesel::joinable!(protocol_violators -> protocol_violations (violation));
 diesel::joinable!(sessions -> users (user_id));
 diesel::joinable!(users -> areas (assigned_area));
+diesel::joinable!(violations -> areas (area_code));
+diesel::joinable!(violations -> users (personnel_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     areas,
     cameras,
-    protocol_violations,
-    protocol_violators,
     sessions,
     users,
+    violations,
 );

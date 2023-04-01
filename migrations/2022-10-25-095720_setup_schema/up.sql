@@ -33,22 +33,17 @@ CREATE TABLE sessions(
     UNIQUE(device_hash)
 );
 
-CREATE TABLE protocol_violations(
+CREATE TABLE violations(
     id uuid DEFAULT uuid_generate_v4(),
-    personnel_id uuid NOT NULL REFERENCES users(id),
     area_code VARCHAR(10) NOT NULL REFERENCES areas(code),
-    category SMALLINT NOT NULL CHECK(category IN (1, 2)),
+    violation_kind SMALLINT NOT NULL CHECK(violation_kind IN (1, 2)),
     date_time TIMESTAMP NOT NULL,
     image_bytes BYTEA NOT NULL,
-    PRIMARY KEY(id)
-);
-
-CREATE TABLE protocol_violators(
-    id uuid DEFAULT uuid_generate_v4(),
-    violation uuid NOT NULL REFERENCES protocol_violations(id),
-    first_name VARCHAR(48) NOT NULL,
-    last_name VARCHAR(48) NOT NULL,
-    category VARCHAR(8) NOT NULL CHECK(
+    identified BOOLEAN NOT NULL,
+    personnel_id uuid REFERENCES users(id),
+    first_name VARCHAR(48),
+    last_name VARCHAR(48),
+    category VARCHAR(8) CHECK(
         category IN ('student', 'visitor', 'faculty', 'staff')
     ),
     PRIMARY KEY(id)
@@ -118,22 +113,13 @@ INSERT
 ,
 UPDATE
     ON areas TO unc_client;
-
 GRANT
 SELECT
 ,
 INSERT
 ,
 UPDATE
-    ON protocol_violators TO unc_client;
-
-GRANT
-SELECT
-,
-INSERT
-,
-UPDATE
-    ON protocol_violations TO unc_client;
+    ON violations TO unc_client;
 
 GRANT
 SELECT

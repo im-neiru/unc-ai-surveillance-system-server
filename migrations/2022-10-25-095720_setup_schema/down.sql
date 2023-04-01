@@ -1,6 +1,5 @@
 DROP TABLE IF EXISTS cameras;
-DROP TABLE IF EXISTS protocol_violators;
-DROP TABLE IF EXISTS protocol_violations;
+DROP TABLE IF EXISTS violations;
 DROP TABLE IF EXISTS sessions;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS areas;
