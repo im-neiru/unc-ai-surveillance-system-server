@@ -9,6 +9,7 @@ mod session;
 mod area;
 mod violation;
 mod violation_kind;
+mod category;
 
 pub use user_role::UserRole;
 pub use password_hash::PasswordHash;
@@ -25,3 +26,4 @@ pub use area::{AreaInsert, AreaSelect, AreaGuardCount};
 pub use violation_kind::ViolationKind;
 pub use violation::ViolationUnknown;
 pub use violation::ViolationUnknownInsert;
+pub use category::Category;
