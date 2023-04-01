@@ -142,6 +142,7 @@ async fn get_image(
 
 #[derive(Deserialize)]
 struct PatchRecordRequest {
+    #[serde(alias = "violation-id")]
     id: uuid::Uuid,
     #[serde(alias = "first-name")]
     first_name: String,
