@@ -1,5 +1,5 @@
 use crate::logging::LogLevel;
-use crate::models::{UserRole, ViolationUnknown};
+use crate::models::{Category, UserRole, ViolationUnknown};
 use crate::{data::AppData, models::UserClaims};
 use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, Responder};
@@ -78,8 +78,49 @@ async fn get_image(
         .body(image))
 }
 
+#[derive(Deserialize)]
+struct PatchRecordRequest {
+    id: uuid::Uuid,
+    #[serde(alias = "first-name")]
+    first_name: String,
+    #[serde(alias = "last-name")]
+    last_name: String,
+    #[serde(alias = "category")]
+    category: Category,
+}
+
+#[actix_web::patch("/record")]
+async fn patch_record(
+    (state, request, user): (
+        web::Data<AppData>,
+        web::Json<PatchRecordRequest>,
+        UserClaims,
+    ),
+) -> super::Result<impl Responder> {
+    use crate::schema::violations;
+
+    if user.assigned_role == UserRole::SystemAdmin {
+        return Err(crate::logging::ResponseError::unauthorized(user));
+    }
+
+    let mut connection = state.connect_database();
+
+    diesel::update(violations::table.filter(violations::id.eq(request.id))).set((
+        violations::personnel_id.eq(Some(user.id)),
+        violations::first_name.eq(Some(&request.first_name)),
+        violations::last_name.eq(Some(&request.last_name)),
+        violations::category.eq(Some(&request.category)),
+        violations::identified.eq(true),
+    ))
+    .execute(&mut connection)
+    .unwrap();
+
+    Ok(HttpResponse::build(StatusCode::OK))
+}
+
 pub fn scope() -> actix_web::Scope {
     web::scope("/violations")
         .service(get_unidentified)
         .service(get_image)
+        .service(patch_record)
 }
