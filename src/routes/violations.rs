@@ -77,7 +77,7 @@ async fn get_image(
 }
 
 pub fn scope() -> actix_web::Scope {
-    web::scope("/users")
+    web::scope("/violations")
         .service(get_unidentified)
         .service(get_image)
 }

@@ -24,3 +24,4 @@ pub use user_claims::UserClaims;
 pub use area::{AreaInsert, AreaSelect, AreaGuardCount};
 pub use violation_kind::ViolationKind;
 pub use violation::ViolationUnknown;
+pub use violation::ViolationUnknownInsert;
