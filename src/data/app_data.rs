@@ -1,12 +1,16 @@
+use diesel::RunQueryDsl;
+use std::io::{Cursor, Read, Seek};
+
 use actix_web::http::StatusCode;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::PgConnection;
+use image::ImageOutputFormat;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use tokio::sync::Mutex;
 use xxhash_rust::xxh3::Xxh3;
 
 use crate::logging::{LogLevel, ResponseError};
-use crate::models::{JwtClaims, PasswordHash};
+use crate::models::{JwtClaims, PasswordHash, ViolationKind, ViolationUnknownInsert};
 
 pub struct AppData {
     db_pool: Pool<ConnectionManager<PgConnection>>,
@@ -120,5 +124,38 @@ impl AppData {
 
         xxh3.update(&data);
         xxh3.digest128()
+    }
+
+    pub fn store_violation(
+        &self,
+        area_code: String,
+        violation_kind: ViolationKind,
+        image: image::RgbImage,
+    ) {
+        use crate::schema::violations;
+
+        let mut connection = self.connect_database();
+
+        let mut image_buffer = Vec::<u8>::new();
+
+        {
+            let mut stream = Cursor::new(Vec::<u8>::new());
+            image
+                .write_to(&mut stream, ImageOutputFormat::Jpeg(100))
+                .unwrap();
+            stream.rewind().unwrap();
+            stream.read_to_end(&mut image_buffer).unwrap();
+        }
+
+        diesel::insert_into(violations::table)
+            .values(ViolationUnknownInsert {
+                area_code,
+                violation_kind,
+                date_time: chrono::Utc::now().naive_utc(),
+                image_bytes: image_buffer,
+                identified: false,
+            })
+            .execute(&mut connection)
+            .unwrap();
     }
 }

@@ -43,12 +43,12 @@ diesel::table! {
 diesel::table! {
     violations (id) {
         id -> Uuid,
-        personnel_id -> Uuid,
         area_code -> Varchar,
         violation_kind -> Int2,
         date_time -> Timestamp,
         image_bytes -> Bytea,
         identified -> Bool,
+        personnel_id -> Nullable<Uuid>,
         first_name -> Nullable<Varchar>,
         last_name -> Nullable<Varchar>,
         category -> Nullable<Varchar>,

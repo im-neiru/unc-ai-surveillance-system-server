@@ -1,15 +1,15 @@
-use actix_web::{HttpServer, App};
+use actix_web::{App, HttpServer};
 use logging::LogRecorder;
 use tokio::{self, sync::Mutex};
 
 // local imports
-mod server_config;
 mod data;
-mod routes;
-mod models;
-mod schema;
-mod traits;
 mod logging;
+mod models;
+mod routes;
+mod schema;
+mod server_config;
+mod traits;
 //mod media;
 
 use logging::LoggableError as Error;
@@ -18,18 +18,18 @@ type Result<T, E = Error> = std::result::Result<T, E>;
 #[cfg(test)]
 mod tests;
 
-use server_config::ServerConfig;
 use data::AppData;
+use server_config::ServerConfig;
 
 fn main() -> std::io::Result<()> {
     let server_config = ServerConfig::load();
     println!("Starting");
-    
+
     tokio::runtime::Builder::new_current_thread()
-    .enable_all()
-    .build()
-    .unwrap()
-    .block_on(start_server(&server_config))
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(start_server(&server_config))
 }
 
 async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
@@ -37,12 +37,15 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     let logger = actix_web::web::Data::new(Mutex::new(LogRecorder::new()));
     /*let surveillance = actix_web::web::Data::new({
         let mut logger = logger.lock().await;
-        
+
         media::Surveillance::new()
             .await
             .log_on_error(&mut logger)
             .expect("Failed to start surveillance")
     })*/
+
+    // insert
+    //insert_sample_violations(data.clone());
 
     HttpServer::new(move || {
         App::new()
@@ -58,4 +61,32 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     .bind(server_config.actix_socket_addr())?
     .run()
     .await
+}
+
+fn insert_sample_violations(data: actix_web::web::Data<AppData>) {
+    {
+        let img = image::io::Reader::open("samples/incorrect1.png")
+            .unwrap()
+            .decode()
+            .unwrap();
+
+        data.store_violation(
+            "GT2".to_owned(),
+            models::ViolationKind::FacemaskProtocol,
+            img.to_rgb8(),
+        )
+    }
+
+    {
+        let img = image::io::Reader::open("samples/nofacemask.png")
+            .unwrap()
+            .decode()
+            .unwrap();
+
+        data.store_violation(
+            "GT1".to_owned(),
+            models::ViolationKind::FacemaskProtocol,
+            img.to_rgb8(),
+        )
+    }
 }
