@@ -4,6 +4,7 @@ use actix_web::{post, web};
 
 use chrono::Utc;
 use diesel::r2d2::{ConnectionManager, PooledConnection};
+use diesel::result::DatabaseErrorKind;
 use diesel::{ExpressionMethods, OptionalExtension, PgConnection, QueryDsl, RunQueryDsl};
 
 use serde::{Deserialize, Serialize};
@@ -179,11 +180,26 @@ async fn post_register(
         return Err(crate::logging::ResponseError::unauthorized(user));
     }
 
-    let user_id: uuid::Uuid = diesel::insert_into(users)
+    let user_id = diesel::insert_into(users)
         .values(&model)
         .returning(id)
-        .get_result(&mut connection)
-        .unwrap();
+        .get_result::<uuid::Uuid>(&mut connection)
+        .map_err(|err: diesel::result::Error| match err {
+            diesel::result::Error::DatabaseError(DatabaseErrorKind::UniqueViolation, _) => {
+                crate::logging::ResponseError::new(
+                    "Username taken",
+                    "Username taken",
+                    LogLevel::Information,
+                    StatusCode::CONFLICT,
+                )
+            }
+            _ => crate::logging::ResponseError::new(
+                "Failed to register user",
+                "Failed to register user",
+                LogLevel::Error,
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
+        })?;
 
     Ok(web::Json(CreateUserOk { id: user_id })
         .customize()
