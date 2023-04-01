@@ -7,6 +7,8 @@ mod jwt_claims;
 mod user_claims;
 mod session;
 mod area;
+mod violation;
+mod violation_kind;
 
 pub use user_role::UserRole;
 pub use password_hash::PasswordHash;
@@ -20,3 +22,5 @@ pub use session::SessionInsert;
 pub use jwt_claims::JwtClaims;
 pub use user_claims::UserClaims;
 pub use area::{AreaInsert, AreaSelect, AreaGuardCount};
+pub use violation_kind::ViolationKind;
+pub use violation::ViolationUnknown;

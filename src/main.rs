@@ -53,6 +53,7 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
             .service(routes::users::scope())
             .service(routes::logs::scope())
             .service(routes::areas::scope())
+            .service(routes::violations::scope())
     })
     .bind(server_config.actix_socket_addr())?
     .run()
