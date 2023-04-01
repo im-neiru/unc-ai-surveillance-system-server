@@ -255,7 +255,7 @@ paths:
                       description: Error message
   /areas/create:
       post:
-        summary: Get all areas
+        summary: Create area
         tags:
         - Areas
         security:
