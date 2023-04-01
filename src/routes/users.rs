@@ -161,7 +161,7 @@ async fn get_current(
 }
 
 #[actix_web::post("/register")]
-async fn post_create_user(
+async fn post_register(
     (state, request, user): (web::Data<AppData>, web::Json<CreateUserRequest>, UserClaims),
 ) -> super::Result<impl Responder> {
     use crate::schema::users::dsl::*;
@@ -195,4 +195,5 @@ pub fn scope() -> actix_web::Scope {
     web::scope("/users")
         .service(post_login)
         .service(get_current)
+        .service(post_register)
 }
