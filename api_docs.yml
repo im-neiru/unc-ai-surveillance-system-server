@@ -13,7 +13,8 @@ tags:
     description: Operations related to users
   - name: Areas
     description: Operations related to areas
-
+  - name: Violations
+    description: Operations related to violations
 paths:
   /users/current:
     get:
@@ -379,6 +380,92 @@ paths:
             description: OK
           '401':
             description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      description: Error message
+  /violations/unidentified:
+      post:
+        summary: Retrieve all unidentified violators
+        tags:
+        - Violations
+        security:
+          - jwt: ["json web token"]
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    properties:
+                      id:
+                        type: string
+                      area-code:
+                        type: string
+                      violation-kind:
+                        type: integer
+                        description: "1 = Facemask Violation, 2 = Foot Traffic"
+                example:
+                    id: "3aed09ed-a1b0-4da6-8338-103e64798386"
+                    area-code: "GT2"
+                    violation-kind: 1
+                    date-time: "2011-07-01 06:30:30+00"
+          '401':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      description: Error message
+  /violations/image:
+      post:
+        summary: Retrieve the violators image in jpeg
+        tags:
+        - Violations
+        security:
+          - jwt: ["json web token"]
+        parameters:
+          - name: id
+            in: query
+            description: Violation ID
+            required: true
+            schema:
+              type: string
+              nullable: true
+              default: false
+            example:
+              "5ca126b1-ce37-4bf5-b7d2-0ca11ad7e19a"
+        responses:
+          '200':
+            description: OK
+            content:
+              image/jpeg:
+                schema:
+                  format: binary
+                example:
+                  "no example its jpeg"
+
+          '404':
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      description: Error message
+          '401':
+            description: Not Found
             content:
               application/json:
                 schema:
