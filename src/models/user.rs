@@ -64,9 +64,9 @@ impl UserSelect {
 #[derive(Debug, Serialize)]
 pub struct UserBasicSelect {
     pub id: uuid::Uuid,
-    #[serde(alias = "last-name")]
+    #[serde(rename = "last-name")]
     pub last_name: String,
-    #[serde(alias = "first-name")]
+    #[serde(rename = "first-name")]
     pub first_name: String,
 }
 

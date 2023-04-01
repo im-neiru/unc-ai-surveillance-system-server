@@ -26,7 +26,7 @@ pub struct AreaSelect {
 pub struct AreaGuardCount {
     name: String,
     code: String,
-    #[serde(alias = "guard-count")]
+    #[serde(rename = "guard-count")]
     guard_count: i64,
 }
 
