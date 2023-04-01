@@ -51,7 +51,12 @@ impl actix_web::FromRequest for UserClaims {
                 .filter(sessions::id.eq(jwtc.session_id))
                 .select((users::id, users::assigned_role))
                 .get_result(database)
-                .unwrap();
+                .or(Err(ResponseError::new(
+                    "User do not found",
+                    "Invalid Session",
+                    LogLevel::Information,
+                    StatusCode::UNAUTHORIZED,
+                )))?;
 
             Ok(user_claims)
         })
