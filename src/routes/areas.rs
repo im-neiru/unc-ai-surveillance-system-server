@@ -33,6 +33,11 @@ pub(crate) struct AssignRequest {
     #[serde(alias = "area-code")]
     pub(crate) area_code: Option<String>,
 }
+#[derive(Deserialize)]
+struct AreaRemoveQuery {
+    #[serde(alias = "area-code")]
+    pub(crate) code: String,
+}
 
 #[derive(Serialize)]
 struct CreateAreaOk {
@@ -69,8 +74,7 @@ async fn get_list(
             .unwrap()
             .customize()
             .with_status(StatusCode::OK))
-    }
-    else {
+    } else {
         let list: Vec<AreaSelect> = areas::table.get_results(&mut connection).unwrap();
         Ok(serde_json::to_string(&list)
             .unwrap()
@@ -100,6 +104,24 @@ async fn post_create(
         .unwrap();
 
     Ok(web::Json(CreateAreaOk { code: return_code }))
+}
+
+#[actix_web::delete("/remove")]
+async fn delete_remove(
+    (state, query, user): (web::Data<AppData>, web::Query<AreaRemoveQuery>, UserClaims),
+) -> super::Result<impl Responder> {
+    use crate::schema::areas;
+
+    if user.assigned_role != UserRole::SecurityHead {
+        return Err(crate::logging::ResponseError::unauthorized(user));
+    }
+    let mut connection = state.connect_database();
+
+    diesel::delete(areas::table.filter(areas::code.eq(&query.code)))
+        .execute(&mut connection)
+        .unwrap();
+
+    Ok(HttpResponse::Ok())
 }
 
 #[actix_web::patch("/assign")]
@@ -151,4 +173,5 @@ pub fn scope() -> actix_web::Scope {
         .service(post_create)
         .service(get_list)
         .service(patch_assign)
+        .service(delete_remove)
 }
