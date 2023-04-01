@@ -3,9 +3,11 @@ use diesel::pg::Pg;
 use diesel::serialize::ToSql;
 use diesel::deserialize::FromSql;
 use diesel::sql_types::SmallInt;
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[derive(AsExpression, FromSqlRow)]
+#[derive(Serialize, Deserialize)]
 #[diesel(sql_type = SmallInt)]
 pub enum UserRole {
     SecurityGuard = 1,
