@@ -193,6 +193,86 @@ paths:
                     description: Error message
                 example:
                   message: "Failed to register user"
+  /users/unassigned:
+    post:
+      summary: Get all unassigned guards
+      tags:
+        - Users
+      security:
+        - jwt: ["json web token"]
+      requestBody:
+        required: true
+        content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    id:
+                      type: string
+                      description: The user's id
+                    first-name:
+                      type: string
+                      description: The user's first-name
+                    last-name:
+                      type: string
+                      description: The user's last-name
+              example:
+                - id: 1552f5ec-c2cc-47b7-bed5-761c0361960d,
+                  last-name: LeBlanc,
+                  first-name: Funk"
+
+                - id: 1552f5ec-c2cc-47b7-bed5-761c0361920d,
+                  last-name: Uzumaki,
+                  first-name: Goku"
+
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The user's ID
+              example:
+                id: d6ab56e9-52d1-4609-9aad-40595e57eed4
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+                example:
+                  message: "Username taken"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+                example:
+                  message: "Failed to register user"
   /areas/list:
       get:
         summary: Get all areas
