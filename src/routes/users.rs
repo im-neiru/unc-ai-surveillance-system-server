@@ -12,11 +12,12 @@ use serde_json::json;
 use crate::data::AppData;
 use crate::logging::{LogLevel, ResponseError};
 use crate::models::{
-    DeviceOs, DeviceSignature, JwtClaims, SessionInsert, UserClaims, UserRole, UserSelect,
+    DeviceOs, DeviceSignature, JwtClaims, SessionInsert, UserClaims, UserInsert, UserRole,
+    UserSelect,
 };
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-struct LoginData {
+struct LoginRequest {
     pub username: String,
     pub password: String,
     #[serde(alias = "device-os")]
@@ -28,17 +29,38 @@ struct LoginData {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+struct CreateUserOk {
+    pub id: uuid::Uuid,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct CreateUserRequest {
     username: String,
+    #[serde(alias = "first-name")]
     first_name: String,
+    #[serde(alias = "last-name")]
     last_name: String,
-    password_hash: String,
+    password: String,
+    #[serde(alias = "assigned-role")]
     assigned_role: UserRole,
+}
+
+impl CreateUserRequest {
+    fn model(&self, state: web::Data<AppData>) -> UserInsert {
+        UserInsert {
+            username: self.username.clone(),
+            first_name: self.first_name.clone(),
+            last_name: self.last_name.clone(),
+            password_hash: state.argon2(&self.password),
+            assigned_role: self.assigned_role,
+            assigned_area: None,
+        }
+    }
 }
 
 #[post("/login")]
 async fn post_login(
-    (body, state): (web::Json<LoginData>, web::Data<AppData>),
+    (body, state): (web::Json<LoginRequest>, web::Data<AppData>),
 ) -> super::Result<impl Responder> {
     let mut database = state.connect_database();
     let user = UserSelect::select_by_username(&mut database, &body.username)?;
@@ -58,7 +80,7 @@ async fn post_login(
 async fn create_session(
     state: web::Data<AppData>,
     database: &mut PooledConnection<ConnectionManager<PgConnection>>,
-    login_data: &LoginData,
+    login_data: &LoginRequest,
     user: UserSelect,
 ) -> super::Result<String> {
     let dev_hash = state
@@ -96,7 +118,12 @@ async fn get_current(
 
     let database = &mut *state.connect_database();
     let (username, first_name, last_name, assigned_role) = match users::table
-        .select((users::username, users::first_name, users::last_name, users::assigned_role))
+        .select((
+            users::username,
+            users::first_name,
+            users::last_name,
+            users::assigned_role,
+        ))
         .filter(users::id.eq(user.id))
         .first::<(String, String, String, UserRole)>(database)
         .optional()
@@ -133,20 +160,39 @@ async fn get_current(
     .with_status(StatusCode::OK))
 }
 
-/*
 #[actix_web::post("/register")]
 async fn post_create_user(
     (state, request, user): (web::Data<AppData>, web::Json<CreateUserRequest>, UserClaims),
 ) -> super::Result<impl Responder> {
-    //let mut connection = state.connect_database();
+    use crate::schema::users::dsl::*;
 
+    let mut connection = state.connect_database();
+    let model = request.model(state);
 
+    if user.assigned_role == UserRole::SecurityGuard {
+        return Err(crate::logging::ResponseError::unauthorized(user));
+    }
 
-    todo!();
+    if user.assigned_role == UserRole::SecurityGuard
+        && request.assigned_role == UserRole::SystemAdmin
+    {
+        return Err(crate::logging::ResponseError::unauthorized(user));
+    }
 
-    //Ok()
+    let user_id: uuid::Uuid = diesel::insert_into(users)
+        .values(&model)
+        .returning(id)
+        .get_result(&mut connection)
+        .unwrap();
+
+    Ok(web::Json(CreateUserOk { id: user_id })
+        .customize()
+        .append_header(("Content-Type", "application/json"))
+        .with_status(StatusCode::OK))
 }
-*/
+
 pub fn scope() -> actix_web::Scope {
-    web::scope("/users").service(post_login).service(get_current)
+    web::scope("/users")
+        .service(post_login)
+        .service(get_current)
 }
