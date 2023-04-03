@@ -62,6 +62,7 @@ async fn get_list(
     if query.count_guards == Some(true) {
         let list = areas::table
             .left_join(users::table.on(areas::code.nullable().eq(users::assigned_area)))
+            .filter(users::deactivated.eq(false))
             .group_by((areas::code, areas::name))
             .select((
                 areas::dsl::code,
@@ -137,6 +138,7 @@ async fn patch_assign(
 
     let role: UserRole = users
         .filter(id.eq(request.user_id))
+        .filter(deactivated.eq(false))
         .select(assigned_role)
         .get_result(&mut connection)
         .or(Err(crate::logging::ResponseError::new(

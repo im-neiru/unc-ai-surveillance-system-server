@@ -44,13 +44,14 @@ impl actix_web::FromRequest for UserClaims {
             use crate::schema::sessions;
             use crate::schema::users;
 
-            let database = &mut *state.connect_database();
+            let mut database = state.connect_database();
 
             let user_claims: Self = users::table
                 .inner_join(sessions::table)
+                .filter(users::deactivated.eq(false))
                 .filter(sessions::id.eq(jwtc.session_id))
                 .select((users::id, users::assigned_role))
-                .get_result(database)
+                .get_result(&mut database)
                 .or(Err(ResponseError::new(
                     "User do not found",
                     "Invalid Session",

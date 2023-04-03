@@ -21,7 +21,7 @@ async fn get_entries((records, user, request): (web::Data<Mutex<LogRecorder>>, U
         return Err(
             ResponseError::new(
                 "Non administrator trying to access logs",
-                "Not accessable for non administrator",
+                "Not accessible for non administrator",
                 LogLevel::Information,
                 StatusCode::UNAUTHORIZED)
         );

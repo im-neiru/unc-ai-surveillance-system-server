@@ -54,6 +54,7 @@ impl CreateUserRequest {
             first_name: self.first_name.clone(),
             last_name: self.last_name.clone(),
             password_hash: state.argon2(&self.password),
+            deactivated: false,
             assigned_role: self.assigned_role,
             assigned_area: None,
         }
@@ -221,6 +222,7 @@ async fn get_unassigned(
     let mut connection = state.connect_database();
 
     let guards = users
+        .filter(deactivated.eq(false))
         .filter(
             assigned_area
                 .is_null()

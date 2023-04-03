@@ -16,6 +16,7 @@ pub struct UserInsert {
     pub first_name: String,
     pub last_name: String,
     pub password_hash: PasswordHash,
+    pub deactivated: bool,
     pub assigned_role: UserRole,
     pub assigned_area: Option<String>,
 }
@@ -28,6 +29,7 @@ pub struct UserSelect {
     pub first_name: String,
     pub last_name: String,
     pub password_hash: PasswordHash,
+    pub deactivated: bool,
     pub assigned_role: UserRole,
     pub assigned_area: Option<String>,
 }
