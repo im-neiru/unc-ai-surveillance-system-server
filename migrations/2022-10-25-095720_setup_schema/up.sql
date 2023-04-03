@@ -12,6 +12,7 @@ CREATE TABLE users(
     first_name VARCHAR(80) NOT NULL,
     last_name VARCHAR(80) NOT NULL,
     password_hash BYTEA NOT NULL,
+    deactivated BOOLEAN NOT NULL,
     assigned_role SMALLINT NOT NULL CHECK(assigned_role IN (1, 2, 3)),
     assigned_area VARCHAR(10) REFERENCES areas(code),
     PRIMARY KEY (id),
@@ -46,6 +47,7 @@ CREATE TABLE cameras(
     id integer NOT NULL,
     area_code VARCHAR(10) NOT NULL REFERENCES areas(code),
     camera_url VARCHAR(512) NOT NULL,
+    deactivated BOOLEAN NOT NULL,
     PRIMARY KEY(id)
 );
 -- Sample users
@@ -60,11 +62,12 @@ INSERT INTO users(
         first_name,
         last_name,
         password_hash,
+        deactivated,
         assigned_role
     )
-VALUES ('vladimir', 'Vlad', 'Tepes', password_argon2, 1),
-    ('rio', 'Rio', 'LeBlanc', password_argon2, 2),
-    ('admin', 'Lien', 'Walker', password_argon2, 3);
+VALUES ('vladimir', 'Vlad', 'Tepes', password_argon2, FALSE,  1),
+    ('rio', 'Rio', 'LeBlanc', password_argon2, FALSE, 2),
+    ('admin', 'Lien', 'Walker', password_argon2, FALSE, 3);
 END $$;
 -- Sample areas
 INSERT INTO areas(code, name)
