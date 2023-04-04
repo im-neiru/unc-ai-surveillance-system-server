@@ -112,6 +112,65 @@ impl LoggableResponseError {
             timestamp: chrono::Utc::now(),
         }
     }
+
+    pub fn server_error() -> Self {
+        Self {
+            log_message: String::from("Server Error"),
+            response_message:  String::from("Internal Server Error"), 
+            level: LogLevel::Error,
+            status_code: StatusCode::INTERNAL_SERVER_ERROR,
+            timestamp: chrono::Utc::now(),
+        }
+    }
+
+    pub fn length_limit_check(field_name: &str, field_value: &str, min_length: usize, max_length: usize) -> Result<(), Self> {
+        
+        if field_value.len() > max_length {
+            return Err(
+                Self {
+                    log_message: format!("{field_name} exceed limit"),
+                    response_message: format!("{field_name} must not be longer than {max_length} characters"),
+                    level: LogLevel::Information,
+                    status_code: StatusCode::BAD_REQUEST,
+                    timestamp: chrono::Utc::now(),
+                }
+            );
+        }
+
+        if field_value.len() < min_length {
+            return Err(
+                Self {
+                    log_message: format!("{field_name} is too short"),
+                    response_message:  format!("{field_name} must be at least {min_length} characters"),
+                    level: LogLevel::Information,
+                    status_code: StatusCode::BAD_REQUEST,
+                    timestamp: chrono::Utc::now(),
+                }
+            );
+        }
+
+        Ok(())
+    }
+
+    pub fn conflict_field(field_name: &str) -> Self {
+        Self {
+            log_message: format!("{field_name} already exists"),
+            response_message:  format!("{field_name} already exists"),
+            level: LogLevel::Information,
+            status_code: StatusCode::CONFLICT,
+            timestamp: chrono::Utc::now(),
+        }
+    }
+
+    pub fn value_do_not_exist(value: &str) -> Self {
+        Self {
+            log_message: format!("{value} doesn't exists"),
+            response_message:  format!("{value} doesn't exists"),
+            level: LogLevel::Information,
+            status_code: StatusCode::NOT_FOUND,
+            timestamp: chrono::Utc::now(),
+        }
+    }
 }
 
 impl Loggable for LoggableResponseError {
