@@ -70,3 +70,12 @@ impl TryFrom<CreateAreaRequest> for AreaInsert {
         })
     }
 }
+
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::cameras)]
+pub struct CameraInsert {
+    pub label: String,
+    pub area_code: String,
+    pub camera_url: String,
+    pub deactivated: bool,
+}

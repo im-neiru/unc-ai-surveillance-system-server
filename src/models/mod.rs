@@ -17,7 +17,7 @@ pub use device_signature::DeviceSignature;
 pub use password_hash::PasswordHash;
 pub use user_role::UserRole;
 
-pub use area::{AreaGuardCount, AreaInsert, AreaSelect};
+pub use area::{AreaGuardCount, AreaInsert, AreaSelect, CameraInsert};
 pub use category::Category;
 pub use jwt_claims::JwtClaims;
 pub use session::SessionInsert;

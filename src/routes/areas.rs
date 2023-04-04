@@ -3,6 +3,7 @@ use actix_web::web;
 use actix_web::HttpResponse;
 use actix_web::Responder;
 use diesel::dsl::count;
+use diesel::result::DatabaseErrorKind;
 use diesel::ExpressionMethods;
 use diesel::JoinOnDsl;
 use diesel::NullableExpressionMethods;
@@ -15,6 +16,8 @@ use crate::logging::LogLevel;
 use crate::models::AreaGuardCount;
 use crate::models::AreaInsert;
 use crate::models::AreaSelect;
+use crate::models::CameraInsert;
+use crate::models::IntoModel;
 use crate::{
     data::AppData,
     models::{UserClaims, UserRole},
@@ -48,6 +51,31 @@ struct CreateAreaOk {
 struct ListQuery {
     #[serde(alias = "count-guards")]
     count_guards: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CameraAddRequest {
+    label: String,
+    #[serde(alias = "area-code")]
+    area_code: String,
+    #[serde(alias = "camera-url")]
+    camera_url: String,
+    enable: bool,
+}
+
+impl IntoModel<CameraInsert> for CameraAddRequest {
+    fn model(&self) -> crate::routes::Result<CameraInsert> {
+        crate::logging::ResponseError::length_limit_check("Label", &self.label, 3, 15)?;
+        crate::logging::ResponseError::length_limit_check("Area code", &self.area_code, 3, 10)?;
+        crate::logging::ResponseError::length_limit_check("Camera URL", &self.camera_url, 10, 512)?;
+
+        Ok(CameraInsert {
+            label: self.label.clone(),
+            area_code: self.area_code.clone(),
+            camera_url: self.camera_url.clone(),
+            deactivated: !self.enable,
+        })
+    }
 }
 
 #[actix_web::get("/list")]
@@ -170,10 +198,44 @@ async fn patch_assign(
     Ok(HttpResponse::Ok())
 }
 
+#[actix_web::post("/cameras/add")]
+async fn post_camera_add(
+    (state, request, user): (web::Data<AppData>, web::Json<CameraAddRequest>, UserClaims),
+) -> super::Result<impl Responder> {
+    use crate::schema::cameras;
+
+    if user.assigned_role == UserRole::SecurityGuard {
+        return Err(crate::logging::ResponseError::unauthorized(user));
+    }
+
+    let mut connection = state.connect_database();
+
+    match diesel::insert_into(cameras::table)
+        .values(request.model()?)
+        .returning(cameras::id)
+        .get_result::<uuid::Uuid>(&mut connection)
+    {
+        Err(diesel::result::Error::DatabaseError(DatabaseErrorKind::UniqueViolation, _)) => {
+            Err(crate::logging::ResponseError::conflict_field("Name"))
+        }
+        Err(diesel::result::Error::DatabaseError(DatabaseErrorKind::ForeignKeyViolation, _)) => {
+            Err(crate::logging::ResponseError::value_do_not_exist(
+                &request.area_code,
+            ))
+        }
+        Err(_) => Err(crate::logging::ResponseError::server_error()),
+        Ok(id) => Ok(serde_json::json!({ "id": id })
+            .to_string()
+            .customize()
+            .with_status(StatusCode::OK)),
+    }
+}
+
 pub fn scope() -> actix_web::Scope {
     web::scope("/areas")
         .service(post_create)
         .service(get_list)
         .service(patch_assign)
         .service(delete_remove)
+        .service(post_camera_add)
 }
