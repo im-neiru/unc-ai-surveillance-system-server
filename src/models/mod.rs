@@ -10,6 +10,7 @@ mod user_claims;
 mod user_role;
 mod violation;
 mod violation_kind;
+mod into_model;
 
 pub use device_os::DeviceOs;
 pub use device_signature::DeviceSignature;
@@ -28,3 +29,4 @@ pub use violation::IdentifiedViolation;
 pub use violation::ViolationUnknown;
 pub use violation::ViolationUnknownInsert;
 pub use violation_kind::ViolationKind;
+pub(crate) use into_model::IntoModel;
