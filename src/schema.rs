@@ -9,7 +9,7 @@ diesel::table! {
 
 diesel::table! {
     cameras (id) {
-        id -> Int4,
+        id -> Uuid,
         label -> Varchar,
         area_code -> Varchar,
         camera_url -> Varchar,

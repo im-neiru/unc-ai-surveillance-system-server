@@ -46,7 +46,7 @@ CREATE TABLE violations(
     PRIMARY KEY(id)
 );
 CREATE TABLE cameras(
-    id INT NOT NULL,
+    id uuid DEFAULT uuid_generate_v4(),
     label VARCHAR(15) NOT NULL,
     area_code VARCHAR(10) NOT NULL REFERENCES areas(code),
     camera_url VARCHAR(512) NOT NULL,
