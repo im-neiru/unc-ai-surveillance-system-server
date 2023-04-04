@@ -63,6 +63,12 @@ struct CameraAddRequest {
     enable: bool,
 }
 
+#[derive(Debug, Deserialize)]
+struct CameraRemoveQuery {
+    #[serde(alias = "id")]
+    camera_id: uuid::Uuid,
+}
+
 impl IntoModel<CameraInsert> for CameraAddRequest {
     fn model(&self) -> crate::routes::Result<CameraInsert> {
         crate::logging::ResponseError::length_limit_check("Label", &self.label, 3, 15)?;
@@ -136,7 +142,7 @@ async fn post_create(
 }
 
 #[actix_web::delete("/remove")]
-async fn delete_remove(
+async fn delete_areas(
     (state, query, user): (web::Data<AppData>, web::Query<AreaRemoveQuery>, UserClaims),
 ) -> super::Result<impl Responder> {
     use crate::schema::areas;
@@ -150,7 +156,7 @@ async fn delete_remove(
         .execute(&mut connection)
         .unwrap();
 
-    Ok(HttpResponse::Ok())
+    Ok(HttpResponse::NoContent())
 }
 
 #[actix_web::patch("/assign")]
@@ -231,11 +237,42 @@ async fn post_camera_add(
     }
 }
 
+#[actix_web::delete("/cameras/remove")]
+async fn delete_camera(
+    (state, query, user): (
+        web::Data<AppData>,
+        web::Query<CameraRemoveQuery>,
+        UserClaims,
+    ),
+) -> super::Result<impl Responder> {
+    use crate::schema::cameras;
+
+    if user.assigned_role == UserRole::SecurityGuard {
+        return Err(crate::logging::ResponseError::unauthorized(user));
+    }
+
+    let mut connection = state.connect_database();
+
+    match diesel::delete(cameras::table.filter(cameras::id.eq(query.camera_id)))
+        .execute(&mut connection)
+    {
+        Err(_) => Err(crate::logging::ResponseError::server_error()),
+        Ok(row_count) => {
+            if row_count == 0 {
+                Err(crate::logging::ResponseError::value_do_not_exist("Camera"))
+            } else {
+                Ok(HttpResponse::NoContent())
+            }
+        }
+    }
+}
+
 pub fn scope() -> actix_web::Scope {
     web::scope("/areas")
         .service(post_create)
         .service(get_list)
         .service(patch_assign)
-        .service(delete_remove)
+        .service(delete_areas)
         .service(post_camera_add)
+        .service(delete_camera)
 }
