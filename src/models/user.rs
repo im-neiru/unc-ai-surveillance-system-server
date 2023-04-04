@@ -32,6 +32,7 @@ pub struct UserSelect {
     pub deactivated: bool,
     pub assigned_role: UserRole,
     pub assigned_area: Option<String>,
+    pub avatar: Option<Vec<u8>>
 }
 
 impl UserSelect {
