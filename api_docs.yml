@@ -15,6 +15,8 @@ tags:
     description: Operations related to areas
   - name: Violations
     description: Operations related to violations
+  - name: Cameras
+    description: Operations related to cameras
 paths:
   /users/current:
     get:
@@ -429,6 +431,90 @@ paths:
           description: OK
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+
+  /areas/cameras/add:
+    post:
+      summary: Add camera into an area,
+      tags:
+        - Cameras
+      security:
+        - jwt: ["json web token"]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                area-code:
+                  type: string
+                  maxLength: 10
+                  minLength: 3
+                label:
+                  type: string
+                  maxLength: 15
+                  minLength: 3
+                camera-url:
+                  type: string
+                  maxLength: 512
+                  minLength: 10
+                enable:
+                  type: boolean
+            example:
+              area-code: "JH-C1"
+              label: "JH Camera 1"
+              camera-url: "rtsp://192.168.100.2:9077/h264_ulaw.sdp"
+              enable: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Camera id
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        '404':
+          description: Not Found (When area code doesn't exists),
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        '409':
+          description: Conflict (When similar camera label)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        '500':
+          description: Internal Server Error
           content:
             application/json:
               schema:
