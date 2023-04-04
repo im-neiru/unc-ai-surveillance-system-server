@@ -10,6 +10,7 @@ diesel::table! {
 diesel::table! {
     cameras (id) {
         id -> Int4,
+        label -> Varchar,
         area_code -> Varchar,
         camera_url -> Varchar,
         deactivated -> Bool,
@@ -39,6 +40,7 @@ diesel::table! {
         deactivated -> Bool,
         assigned_role -> Int2,
         assigned_area -> Nullable<Varchar>,
+        avatar -> Nullable<Bytea>,
     }
 }
 

@@ -15,6 +15,8 @@ CREATE TABLE users(
     deactivated BOOLEAN NOT NULL,
     assigned_role SMALLINT NOT NULL CHECK(assigned_role IN (1, 2, 3)),
     assigned_area VARCHAR(10) REFERENCES areas(code),
+    avatar BYTEA,
+
     PRIMARY KEY (id),
     UNIQUE(username)
 );
@@ -44,10 +46,13 @@ CREATE TABLE violations(
     PRIMARY KEY(id)
 );
 CREATE TABLE cameras(
-    id integer NOT NULL,
+    id INT NOT NULL,
+    label VARCHAR(15) NOT NULL,
     area_code VARCHAR(10) NOT NULL REFERENCES areas(code),
     camera_url VARCHAR(512) NOT NULL,
     deactivated BOOLEAN NOT NULL,
+
+    UNIQUE(label),
     PRIMARY KEY(id)
 );
 -- Sample users
