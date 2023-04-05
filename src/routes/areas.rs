@@ -18,6 +18,7 @@ use crate::models::AreaInsert;
 use crate::models::AreaSelect;
 use crate::models::CameraInsert;
 use crate::models::IntoModel;
+
 use crate::{
     data::AppData,
     models::{UserClaims, UserRole},
@@ -54,6 +55,21 @@ struct ListQuery {
 }
 
 #[derive(Debug, Deserialize)]
+struct CameraRemoveQuery {
+    #[serde(alias = "id")]
+    camera_id: uuid::Uuid,
+}
+
+#[derive(Debug, Deserialize)]
+struct CameraModifyRequest {
+    #[serde(alias = "id")]
+    camera_id: uuid::Uuid,
+    label: Option<String>,
+    #[serde(alias = "camera-url")]
+    camera_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 struct CameraAddRequest {
     label: String,
     #[serde(alias = "area-code")]
@@ -61,12 +77,6 @@ struct CameraAddRequest {
     #[serde(alias = "camera-url")]
     camera_url: String,
     enable: bool,
-}
-
-#[derive(Debug, Deserialize)]
-struct CameraRemoveQuery {
-    #[serde(alias = "id")]
-    camera_id: uuid::Uuid,
 }
 
 impl IntoModel<CameraInsert> for CameraAddRequest {
@@ -237,6 +247,55 @@ async fn post_camera_add(
     }
 }
 
+#[actix_web::patch("/cameras/modify")]
+async fn patch_camera_modify(
+    (state, request, user): (
+        web::Data<AppData>,
+        web::Json<CameraModifyRequest>,
+        UserClaims,
+    ),
+) -> super::Result<impl Responder> {
+    use crate::schema::cameras;
+
+    if user.assigned_role == UserRole::SecurityGuard {
+        return Err(crate::logging::ResponseError::unauthorized(user));
+    }
+
+    let mut connection = state.connect_database();
+
+    let result = if let (Some(label), Some(camera_url)) = (&request.label, &request.camera_url) {
+        diesel::update(cameras::table.filter(cameras::id.eq(request.camera_id)))
+            .set((cameras::label.eq(label), cameras::camera_url.eq(camera_url)))
+            .execute(&mut connection)
+    } else if let Some(label) = &request.label {
+        diesel::update(cameras::table.filter(cameras::id.eq(request.camera_id)))
+            .set(cameras::label.eq(label))
+            .execute(&mut connection)
+    } else if let Some(camera_url) = &request.camera_url {
+        diesel::update(cameras::table.filter(cameras::id.eq(request.camera_id)))
+            .set(cameras::camera_url.eq(camera_url))
+            .execute(&mut connection)
+    } else {
+        return Err(crate::logging::ResponseError::new(
+            "Nothing to do",
+            "Nothing to do",
+            LogLevel::Information,
+            StatusCode::NOT_ACCEPTABLE,
+        ));
+    };
+
+    match result {
+        Err(_) => Err(crate::logging::ResponseError::server_error()),
+        Ok(row_count) => {
+            if row_count == 0 {
+                Err(crate::logging::ResponseError::value_do_not_exist("Camera"))
+            } else {
+                Ok(HttpResponse::NoContent())
+            }
+        }
+    }
+}
+
 #[actix_web::delete("/cameras/remove")]
 async fn delete_camera(
     (state, query, user): (
@@ -274,5 +333,6 @@ pub fn scope() -> actix_web::Scope {
         .service(patch_assign)
         .service(delete_areas)
         .service(post_camera_add)
+        .service(patch_camera_modify)
         .service(delete_camera)
 }
