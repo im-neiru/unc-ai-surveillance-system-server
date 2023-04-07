@@ -63,6 +63,7 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     .await
 }
 
+#[allow(unused)]
 fn insert_sample_violations(data: actix_web::web::Data<AppData>) {
     {
         let img = image::io::Reader::open("samples/incorrect1.png")
