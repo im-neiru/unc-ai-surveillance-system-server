@@ -1,3 +1,6 @@
+use std::cmp::Ordering;
+use std::io::{Cursor, Read, Seek, Write};
+
 use actix_web::http::StatusCode;
 use actix_web::{post, web};
 use actix_web::{HttpResponse, Responder};
@@ -7,7 +10,8 @@ use diesel::r2d2::{ConnectionManager, PooledConnection};
 use diesel::result::DatabaseErrorKind;
 use diesel::BoolExpressionMethods;
 use diesel::{ExpressionMethods, OptionalExtension, PgConnection, QueryDsl, RunQueryDsl};
-
+use futures_util::StreamExt;
+use image::ImageOutputFormat;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -283,6 +287,104 @@ async fn get_avatar(
         .body(state.draw_default_avatar(&first_name)?))
 }
 
+#[actix_web::patch("/avatar")]
+async fn patch_avatar(
+    (state, mut payload, user): (
+        web::Data<AppData<'_>>,
+        actix_multipart::Multipart,
+        UserClaims,
+    ),
+) -> super::Result<impl Responder> {
+    while let Some(item) = payload.next().await {
+        use crate::schema::users;
+
+        let mut field = item.unwrap();
+
+        if field.name() == "image" {
+            let mut upload_bytes = Cursor::new(Vec::<u8>::new());
+
+            while let Some(chunk) = field.next().await {
+                let chunk = chunk.or(Err(crate::logging::ResponseError::invalid_field_format(
+                    "image",
+                )))?;
+
+                upload_bytes.write_all(&chunk).ok();
+            }
+
+            let mut image_bytes = Vec::<u8>::new();
+
+            {
+                upload_bytes
+                    .rewind()
+                    .or(Err(crate::logging::ResponseError::server_error()))?;
+                let mut dynamic_image = image::io::Reader::new(upload_bytes)
+                    .with_guessed_format()
+                    .or(Err(crate::logging::ResponseError::invalid_field_format(
+                        "image",
+                    )))?
+                    .decode()
+                    .or(Err(crate::logging::ResponseError::invalid_field_format(
+                        "image",
+                    )))?;
+
+                let (w, h) = (dynamic_image.width(), dynamic_image.height());
+
+                match w.cmp(&h) {
+                    Ordering::Equal => {
+                        if w > 256 {
+                            dynamic_image = dynamic_image.thumbnail(256, 256);
+                        }
+                    }
+                    Ordering::Less => {
+                        dynamic_image = dynamic_image.crop(0, (h - w) / 2, w, w);
+
+                        if w > 256 {
+                            dynamic_image = dynamic_image.thumbnail(256, 256);
+                        }
+                    }
+                    Ordering::Greater => {
+                        dynamic_image = dynamic_image.crop((w - h) / 2, 0, h, h);
+
+                        if h > 256 {
+                            dynamic_image = dynamic_image.thumbnail(256, 256);
+                        }
+                    }
+                }
+                let mut writer = Cursor::new(Vec::<u8>::new());
+
+                dynamic_image
+                    .write_to(&mut writer, ImageOutputFormat::Jpeg(100))
+                    .or(Err(crate::logging::ResponseError::server_error()))?;
+
+                writer
+                    .rewind()
+                    .or(Err(crate::logging::ResponseError::server_error()))?;
+
+                writer
+                    .read_to_end(&mut image_bytes)
+                    .or(Err(crate::logging::ResponseError::server_error()))?;
+            }
+
+            let mut connection = state.connect_database();
+
+            return match diesel::update(users::table.filter(users::id.eq(user.id)))
+                .set(users::avatar.eq(image_bytes))
+                .execute(&mut connection)
+            {
+                Ok(1) => Ok(HttpResponse::NoContent()),
+                _ => Err(crate::logging::ResponseError::server_error()),
+            };
+        }
+    }
+
+    Err(crate::logging::ResponseError::new(
+        "Bad request",
+        "Bad request",
+        LogLevel::Information,
+        StatusCode::BAD_REQUEST,
+    ))
+}
+
 pub fn scope() -> actix_web::Scope {
     web::scope("/users")
         .service(post_login)
@@ -290,4 +392,5 @@ pub fn scope() -> actix_web::Scope {
         .service(post_register)
         .service(get_unassigned)
         .service(get_avatar)
+        .service(patch_avatar)
 }
