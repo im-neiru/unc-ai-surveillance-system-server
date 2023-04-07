@@ -1,10 +1,15 @@
 use diesel::RunQueryDsl;
 use std::io::{Cursor, Read, Seek};
 
+use image::ImageOutputFormat;
+use image::{Rgb, RgbImage};
+use imageproc::drawing::{draw_filled_rect_mut, draw_text_mut, text_size};
+use imageproc::rect::Rect;
+use rusttype::{Font, Scale};
+
 use actix_web::http::StatusCode;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::PgConnection;
-use image::ImageOutputFormat;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use tokio::sync::Mutex;
 use xxhash_rust::xxh3::Xxh3;
@@ -12,12 +17,13 @@ use xxhash_rust::xxh3::Xxh3;
 use crate::logging::{LogLevel, ResponseError};
 use crate::models::{JwtClaims, PasswordHash, ViolationKind, ViolationUnknownInsert};
 
-pub struct AppData {
+pub struct AppData<'a> {
     db_pool: Pool<ConnectionManager<PgConnection>>,
     xxh3: Mutex<Xxh3>,
+    font: Font<'a>,
 }
 
-impl AppData {
+impl<'a> AppData<'a> {
     const JWT_SECRET: &'static str = "2b9e6f9ec298c3a7ebde69e941ed2d81";
 
     pub fn create(database_url: &str) -> Self {
@@ -29,6 +35,12 @@ impl AppData {
                 .build(manager)
                 .expect("Could not build connection pool"),
             xxh3: Mutex::new(Xxh3::with_seed(0x13ac0750331f23db)),
+            font: {
+                Font::try_from_vec(Vec::from(
+                    include_bytes!("../../assets/Roboto-Medium.ttf") as &[u8]
+                ))
+                .unwrap()
+            },
         }
     }
 
@@ -157,5 +169,72 @@ impl AppData {
             })
             .execute(&mut connection)
             .unwrap();
+    }
+
+    fn random_color() -> Rgb<u8> {
+        let h = fastrand::f32();
+
+        let h_i = (h * 6.0).floor() as i32;
+        let f = h * 6.0 - h_i as f32;
+        let p = 0.44;
+        let q = (1.0 - f * 0.4) * 0.8;
+        let t = (1.0 - (1.0 - f) * 0.45) * 0.8;
+
+        let (r, g, b) = match h_i % 6 {
+            0 => (0.8, t, p),
+            1 => (q, 0.8, p),
+            2 => (p, 0.8, t),
+            3 => (p, q, 0.8),
+            4 => (t, p, 0.8),
+            5 => (1.0, p, q),
+            _ => (0.0, 0.0, 0.0),
+        };
+
+        Rgb([
+            (r * 255.0 + 0.5) as u8,
+            (g * 255.0 + 0.5) as u8,
+            (b * 255.0 + 0.5) as u8,
+        ])
+    }
+
+    pub fn draw_default_avatar(&self, first_name: &str) -> crate::routes::Result<Vec<u8>> {
+        let mut image = RgbImage::new(256, 256);
+
+        let scale = Scale { x: 166.0, y: 166.0 };
+
+        let text = &first_name[0..1];
+
+        let (tw, th) = text_size(scale, &self.font, text);
+        draw_filled_rect_mut(
+            &mut image,
+            Rect::at(0, 0).of_size(256, 256),
+            Self::random_color(),
+        );
+        draw_text_mut(
+            &mut image,
+            Rgb([250u8, 250u8, 250u8]),
+            (246 - tw) / 2i32,
+            (240 - th) / 2i32,
+            scale,
+            &self.font,
+            text,
+        );
+
+        let mut image_bytes = Vec::new();
+
+        {
+            let mut stream = Cursor::new(Vec::<u8>::new());
+            image
+                .write_to(&mut stream, ImageOutputFormat::Jpeg(100))
+                .or(Err(crate::logging::ResponseError::server_error()))?;
+            stream
+                .rewind()
+                .or(Err(crate::logging::ResponseError::server_error()))?;
+            stream
+                .read_to_end(&mut image_bytes)
+                .or(Err(crate::logging::ResponseError::server_error()))?;
+        }
+
+        Ok(image_bytes)
     }
 }
