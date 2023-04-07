@@ -1,6 +1,6 @@
 use actix_web::http::StatusCode;
-use actix_web::Responder;
 use actix_web::{post, web};
+use actix_web::{HttpResponse, Responder};
 
 use chrono::Utc;
 use diesel::r2d2::{ConnectionManager, PooledConnection};
@@ -48,7 +48,7 @@ struct CreateUserRequest {
 }
 
 impl CreateUserRequest {
-    fn model(&self, state: web::Data<AppData>) -> UserInsert {
+    fn model(&self, state: web::Data<AppData<'_>>) -> UserInsert {
         UserInsert {
             username: self.username.clone(),
             first_name: self.first_name.clone(),
@@ -61,9 +61,14 @@ impl CreateUserRequest {
     }
 }
 
+#[derive(Deserialize)]
+struct GetAvatarQuery {
+    id: Option<uuid::Uuid>,
+}
+
 #[post("/login")]
 async fn post_login(
-    (body, state): (web::Json<LoginRequest>, web::Data<AppData>),
+    (body, state): (web::Json<LoginRequest>, web::Data<AppData<'_>>),
 ) -> super::Result<impl Responder> {
     let mut database = state.connect_database();
     let user = UserSelect::select_by_username(&mut database, &body.username)?;
@@ -81,7 +86,7 @@ async fn post_login(
 }
 
 async fn create_session(
-    state: web::Data<AppData>,
+    state: web::Data<AppData<'_>>,
     database: &mut PooledConnection<ConnectionManager<PgConnection>>,
     login_data: &LoginRequest,
     user: UserSelect,
@@ -115,7 +120,7 @@ async fn create_session(
 
 #[actix_web::get("/current")]
 async fn get_current(
-    (state, user): (web::Data<AppData>, UserClaims),
+    (state, user): (web::Data<AppData<'_>>, UserClaims),
 ) -> super::Result<impl Responder> {
     use crate::schema::users;
 
@@ -165,7 +170,11 @@ async fn get_current(
 
 #[actix_web::post("/register")]
 async fn post_register(
-    (state, request, user): (web::Data<AppData>, web::Json<CreateUserRequest>, UserClaims),
+    (state, request, user): (
+        web::Data<AppData<'_>>,
+        web::Json<CreateUserRequest>,
+        UserClaims,
+    ),
 ) -> super::Result<impl Responder> {
     use crate::schema::users::dsl::*;
 
@@ -211,7 +220,7 @@ async fn post_register(
 
 #[actix_web::get("/unassigned")]
 async fn get_unassigned(
-    (state, user): (web::Data<AppData>, UserClaims),
+    (state, user): (web::Data<AppData<'_>>, UserClaims),
 ) -> super::Result<impl Responder> {
     use crate::schema::users::dsl::*;
 
@@ -237,10 +246,48 @@ async fn get_unassigned(
         .with_status(StatusCode::OK))
 }
 
+#[actix_web::get("/avatar")]
+async fn get_avatar(
+    (state, query, user): (
+        web::Data<AppData<'_>>,
+        web::Query<GetAvatarQuery>,
+        UserClaims,
+    ),
+) -> super::Result<impl Responder> {
+    use crate::schema::users;
+
+    let user_id = query.id.unwrap_or(user.id);
+
+    let mut connection = state.connect_database();
+
+    let avatar: Option<Vec<u8>> = users::table
+        .filter(users::id.eq(user_id))
+        .select(users::avatar)
+        .get_result(&mut connection)
+        .or(Err(crate::logging::ResponseError::server_error()))?;
+
+    if let Some(bytes) = avatar {
+        return Ok(HttpResponse::build(StatusCode::OK)
+            .content_type("image/jpeg")
+            .body(bytes));
+    }
+
+    let first_name: String = users::table
+        .filter(users::id.eq(user_id))
+        .select(users::first_name)
+        .get_result(&mut connection)
+        .unwrap();
+
+    Ok(HttpResponse::build(StatusCode::OK)
+        .content_type("image/jpeg")
+        .body(state.draw_default_avatar(&first_name)?))
+}
+
 pub fn scope() -> actix_web::Scope {
     web::scope("/users")
         .service(post_login)
         .service(get_current)
         .service(post_register)
         .service(get_unassigned)
+        .service(get_avatar)
 }
