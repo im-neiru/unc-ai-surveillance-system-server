@@ -11,7 +11,7 @@ use serde::Deserialize;
 
 #[actix_web::get("/unidentified")]
 async fn get_unidentified(
-    (state, user): (web::Data<AppData>, UserClaims),
+    (state, user): (web::Data<AppData<'_>>, UserClaims),
 ) -> super::Result<impl Responder> {
     use crate::schema::users;
     use crate::schema::violations::dsl::*;
@@ -58,7 +58,7 @@ struct GetIdentifiedQuery {
 #[actix_web::get("/identified")]
 async fn get_identified(
     (state, user, query): (
-        web::Data<AppData>,
+        web::Data<AppData<'_>>,
         UserClaims,
         web::Query<GetIdentifiedQuery>,
     ),
@@ -118,7 +118,7 @@ struct GetImageQuery {
 
 #[actix_web::get("/image")]
 async fn get_image(
-    (state, query, _user): (web::Data<AppData>, web::Query<GetImageQuery>, UserClaims),
+    (state, query, _user): (web::Data<AppData<'_>>, web::Query<GetImageQuery>, UserClaims),
 ) -> super::Result<impl Responder> {
     use crate::schema::violations::dsl::*;
 
@@ -155,7 +155,7 @@ struct PatchRecordRequest {
 #[actix_web::patch("/record")]
 async fn patch_record(
     (state, request, user): (
-        web::Data<AppData>,
+        web::Data<AppData<'_>>,
         web::Json<PatchRecordRequest>,
         UserClaims,
     ),

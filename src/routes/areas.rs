@@ -96,7 +96,7 @@ impl IntoModel<CameraInsert> for CameraAddRequest {
 
 #[actix_web::get("/list")]
 async fn get_list(
-    (state, _user, query): (web::Data<AppData>, UserClaims, web::Query<ListQuery>),
+    (state, _user, query): (web::Data<AppData<'_>>, UserClaims, web::Query<ListQuery>),
 ) -> super::Result<impl Responder> {
     use crate::schema::areas;
     use crate::schema::users;
@@ -130,7 +130,7 @@ async fn get_list(
 
 #[actix_web::post("/create")]
 async fn post_create(
-    (state, request, user): (web::Data<AppData>, web::Json<CreateAreaRequest>, UserClaims),
+    (state, request, user): (web::Data<AppData<'_>>, web::Json<CreateAreaRequest>, UserClaims),
 ) -> super::Result<impl Responder> {
     use crate::schema::areas::dsl::*;
 
@@ -153,7 +153,7 @@ async fn post_create(
 
 #[actix_web::delete("/remove")]
 async fn delete_areas(
-    (state, query, user): (web::Data<AppData>, web::Query<AreaRemoveQuery>, UserClaims),
+    (state, query, user): (web::Data<AppData<'_>>, web::Query<AreaRemoveQuery>, UserClaims),
 ) -> super::Result<impl Responder> {
     use crate::schema::areas;
 
@@ -171,7 +171,7 @@ async fn delete_areas(
 
 #[actix_web::patch("/assign")]
 async fn patch_assign(
-    (state, request, user): (web::Data<AppData>, web::Json<AssignRequest>, UserClaims),
+    (state, request, user): (web::Data<AppData<'_>>, web::Json<AssignRequest>, UserClaims),
 ) -> super::Result<impl Responder> {
     use crate::schema::users::dsl::*;
 
@@ -216,7 +216,7 @@ async fn patch_assign(
 
 #[actix_web::post("/cameras/add")]
 async fn post_camera_add(
-    (state, request, user): (web::Data<AppData>, web::Json<CameraAddRequest>, UserClaims),
+    (state, request, user): (web::Data<AppData<'_>>, web::Json<CameraAddRequest>, UserClaims),
 ) -> super::Result<impl Responder> {
     use crate::schema::cameras;
 
@@ -250,7 +250,7 @@ async fn post_camera_add(
 #[actix_web::patch("/cameras/modify")]
 async fn patch_camera_modify(
     (state, request, user): (
-        web::Data<AppData>,
+        web::Data<AppData<'_>>,
         web::Json<CameraModifyRequest>,
         UserClaims,
     ),
@@ -299,7 +299,7 @@ async fn patch_camera_modify(
 #[actix_web::delete("/cameras/remove")]
 async fn delete_camera(
     (state, query, user): (
-        web::Data<AppData>,
+        web::Data<AppData<'_>>,
         web::Query<CameraRemoveQuery>,
         UserClaims,
     ),
