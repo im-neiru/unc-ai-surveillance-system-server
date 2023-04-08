@@ -371,8 +371,14 @@ async fn patch_avatar(
                 .set(users::avatar.eq(image_bytes))
                 .execute(&mut connection)
             {
-                Ok(1) => Ok(HttpResponse::NoContent()),
-                _ => Err(crate::logging::ResponseError::server_error()),
+                Ok(row_count) => {
+                    if row_count == 1 {
+                        Ok(HttpResponse::NoContent())
+                    } else {
+                        Err(crate::logging::ResponseError::value_do_not_exist("User"))
+                    }
+                }
+                Err(_) => Err(crate::logging::ResponseError::server_error()),
             };
         }
     }
@@ -383,6 +389,29 @@ async fn patch_avatar(
         LogLevel::Information,
         StatusCode::BAD_REQUEST,
     ))
+}
+
+#[actix_web::delete("/avatar")]
+async fn delete_avatar(
+    (state, user): (web::Data<AppData<'_>>, UserClaims),
+) -> super::Result<impl Responder> {
+    let mut connection = state.connect_database();
+
+    use crate::schema::users;
+
+    match diesel::update(users::table.filter(users::id.eq(user.id)))
+        .set(users::avatar.eq(Option::<Vec<u8>>::None))
+        .execute(&mut connection)
+    {
+        Ok(row_count) => {
+            if row_count == 1 {
+                Ok(HttpResponse::NoContent())
+            } else {
+                Err(crate::logging::ResponseError::value_do_not_exist("User"))
+            }
+        }
+        Err(_) => Err(crate::logging::ResponseError::server_error()),
+    }
 }
 
 pub fn scope() -> actix_web::Scope {
