@@ -422,4 +422,5 @@ pub fn scope() -> actix_web::Scope {
         .service(get_unassigned)
         .service(get_avatar)
         .service(patch_avatar)
+        .service(delete_avatar)
 }
