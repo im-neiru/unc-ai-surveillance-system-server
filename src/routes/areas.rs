@@ -214,8 +214,8 @@ async fn patch_assign(
     Ok(HttpResponse::Ok())
 }
 
-#[actix_web::post("/cameras/add")]
-async fn post_camera_add(
+#[actix_web::post("/camera")]
+async fn post_camera(
     (state, request, user): (web::Data<AppData<'_>>, web::Json<CameraAddRequest>, UserClaims),
 ) -> super::Result<impl Responder> {
     use crate::schema::cameras;
@@ -247,8 +247,8 @@ async fn post_camera_add(
     }
 }
 
-#[actix_web::patch("/cameras/modify")]
-async fn patch_camera_modify(
+#[actix_web::patch("/camera")]
+async fn patch_camera(
     (state, request, user): (
         web::Data<AppData<'_>>,
         web::Json<CameraModifyRequest>,
@@ -296,7 +296,7 @@ async fn patch_camera_modify(
     }
 }
 
-#[actix_web::delete("/cameras/remove")]
+#[actix_web::delete("/camera")]
 async fn delete_camera(
     (state, query, user): (
         web::Data<AppData<'_>>,
@@ -332,7 +332,7 @@ pub fn scope() -> actix_web::Scope {
         .service(get_list)
         .service(patch_assign)
         .service(delete_areas)
-        .service(post_camera_add)
-        .service(patch_camera_modify)
+        .service(post_camera)
+        .service(patch_camera)
         .service(delete_camera)
 }
