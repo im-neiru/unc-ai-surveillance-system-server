@@ -252,6 +252,153 @@ paths:
                   message:
                     type: string
                     description: Error message
+  /users/avatar:
+    patch:
+      summary: Set current user's avatar
+      tags:
+        - Users
+      security:
+        - jwt: ["json web token"]
+      responses:
+        "204":
+          description: No Content (Everything's good)
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+      requestBody:
+        description: "Expect a multipart containing the image"
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  description: "Must be image type"
+                  type: string
+                  format: binary
+              required:
+                - image
+            encoding:
+              image:
+                contentType: image/jpeg
+    delete:
+      summary: Clear current user's avatar
+      tags:
+        - Users
+      security:
+        - jwt: ["json web token"]
+      responses:
+        "204":
+          description: No Content (Everything's good)
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+    get:
+      summary: Get specified user avatar (if no parameter then current user)
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: query
+          description: User ID (Optional)
+          required: false
+          schema:
+            type: string
+            nullable: true
+      security:
+        - jwt: ["json web token"]
+      responses:
+        "200":
+          description: OK
+          content:
+            image/jpeg:
+              schema:
+                format: binary
+              example: "no example its jpeg"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
   /areas/list:
     get:
       summary: Get all areas
@@ -440,7 +587,7 @@ paths:
                     type: string
                     description: Error message
 
-  /areas/cameras/add:
+  /areas/camera:
     post:
       summary: Add camera into an area,
       tags:
@@ -473,7 +620,7 @@ paths:
               camera-url: "rtsp://192.168.100.2:9077/h264_ulaw.sdp"
               enable: true
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -483,7 +630,7 @@ paths:
                   id:
                     type: string
                     description: Camera id
-        '401':
+        "401":
           description: Unauthorized
           content:
             application/json:
@@ -493,7 +640,7 @@ paths:
                   message:
                     type: string
                     description: Error message
-        '404':
+        "404":
           description: Not Found (When area code doesn't exists),
           content:
             application/json:
@@ -503,7 +650,7 @@ paths:
                   message:
                     type: string
                     description: Error message
-        '409':
+        "409":
           description: Conflict (When similar camera label)
           content:
             application/json:
@@ -513,7 +660,108 @@ paths:
                   message:
                     type: string
                     description: Error message
-        '500':
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+    patch:
+      summary: Modify camera
+      tags:
+        - Cameras
+      security:
+        - jwt: ["json web token"]
+      requestBody:
+        description: Label and Camera URL are optional but both of them not specified or null will lead to an error. Specify both or either one of the two.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  description: "Camera UUID"
+                  type: string
+                label:
+                  type: string
+                  maxLength: 15
+                  minLength: 3
+                  nullable: true
+                camera-url:
+                  type: string
+                  maxLength: 512
+                  minLength: 10
+                  nullable: true
+            example:
+              id: "fb13efca-5b84-44d7-b017-6dd04651c198"
+              label: "JH Camera 1"
+              camera-url: "rtsp://192.168.100.2:9077/h264_ulaw.sdp"
+      responses:
+        "204":
+          description: No Content (Everything's fine)
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        "404":
+          description: Not Found (When ID doesn't exists),
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+    delete:
+      summary: Delete camera
+      tags:
+        - Cameras
+      parameters:
+        - name: id
+          in: query
+          description: Camera ID
+          required: true
+          schema:
+            type: string
+            nullable: false
+          example: "a08f7868-fe33-4d82-98e8-fbd8b493e725"
+      security:
+        - jwt: ["json web token"]
+      responses:
+        "204":
+          description: No Content (Everything's fine)
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        "404":
+          description: Not Found (When ID doesn't exists),
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message
+        "500":
           description: Internal Server Error
           content:
             application/json:
