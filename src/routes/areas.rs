@@ -61,6 +61,13 @@ struct CameraRemoveQuery {
 }
 
 #[derive(Debug, Deserialize)]
+struct CameraActiveRequest {
+    #[serde(alias = "id")]
+    camera_id: uuid::Uuid,
+    enable: bool,
+}
+
+#[derive(Debug, Deserialize)]
 struct CameraModifyRequest {
     #[serde(alias = "id")]
     camera_id: uuid::Uuid,
@@ -130,7 +137,11 @@ async fn get_list(
 
 #[actix_web::post("/create")]
 async fn post_create(
-    (state, request, user): (web::Data<AppData<'_>>, web::Json<CreateAreaRequest>, UserClaims),
+    (state, request, user): (
+        web::Data<AppData<'_>>,
+        web::Json<CreateAreaRequest>,
+        UserClaims,
+    ),
 ) -> super::Result<impl Responder> {
     use crate::schema::areas::dsl::*;
 
@@ -153,7 +164,11 @@ async fn post_create(
 
 #[actix_web::delete("/remove")]
 async fn delete_areas(
-    (state, query, user): (web::Data<AppData<'_>>, web::Query<AreaRemoveQuery>, UserClaims),
+    (state, query, user): (
+        web::Data<AppData<'_>>,
+        web::Query<AreaRemoveQuery>,
+        UserClaims,
+    ),
 ) -> super::Result<impl Responder> {
     use crate::schema::areas;
 
@@ -216,7 +231,11 @@ async fn patch_assign(
 
 #[actix_web::post("/camera")]
 async fn post_camera(
-    (state, request, user): (web::Data<AppData<'_>>, web::Json<CameraAddRequest>, UserClaims),
+    (state, request, user): (
+        web::Data<AppData<'_>>,
+        web::Json<CameraAddRequest>,
+        UserClaims,
+    ),
 ) -> super::Result<impl Responder> {
     use crate::schema::cameras;
 
@@ -326,6 +345,37 @@ async fn delete_camera(
     }
 }
 
+#[actix_web::patch("/camera/active")]
+async fn patch_active(
+    (state, request, user): (
+        web::Data<AppData<'_>>,
+        web::Json<CameraActiveRequest>,
+        UserClaims,
+    ),
+) -> super::Result<impl Responder> {
+    use crate::schema::cameras;
+
+    if user.assigned_role == UserRole::SecurityGuard {
+        return Err(crate::logging::ResponseError::unauthorized(user));
+    }
+
+    let mut connection = state.connect_database();
+
+    match diesel::update(cameras::table.filter(cameras::id.eq(request.camera_id)))
+        .set(cameras::deactivated.eq(!request.enable))
+        .execute(&mut connection)
+    {
+        Err(_) => Err(crate::logging::ResponseError::server_error()),
+        Ok(row_count) => {
+            if row_count == 0 {
+                Err(crate::logging::ResponseError::value_do_not_exist("Camera"))
+            } else {
+                Ok(HttpResponse::NoContent())
+            }
+        }
+    }
+}
+
 pub fn scope() -> actix_web::Scope {
     web::scope("/areas")
         .service(post_create)
@@ -335,4 +385,5 @@ pub fn scope() -> actix_web::Scope {
         .service(post_camera)
         .service(patch_camera)
         .service(delete_camera)
+        .service(patch_active)
 }
