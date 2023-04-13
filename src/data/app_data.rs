@@ -16,17 +16,19 @@ use xxhash_rust::xxh3::Xxh3;
 
 use crate::logging::{LogLevel, ResponseError};
 use crate::models::{JwtClaims, PasswordHash, ViolationKind, ViolationUnknownInsert};
+use crate::safe_multicast::SafeMulticast;
 
 pub struct AppData<'a> {
     db_pool: Pool<ConnectionManager<PgConnection>>,
     xxh3: Mutex<Xxh3>,
     font: Font<'a>,
+    notifier: SafeMulticast,
 }
 
 impl<'a> AppData<'a> {
     const JWT_SECRET: &'static str = "2b9e6f9ec298c3a7ebde69e941ed2d81";
 
-    pub fn create(database_url: &str) -> Self {
+    pub async fn create(database_url: &str) -> AppData<'a> {
         let manager = ConnectionManager::new(database_url);
 
         Self {
@@ -41,6 +43,7 @@ impl<'a> AppData<'a> {
                 ))
                 .unwrap()
             },
+            notifier: SafeMulticast::new().await,
         }
     }
 

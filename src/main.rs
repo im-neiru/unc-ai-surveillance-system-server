@@ -7,6 +7,7 @@ mod data;
 mod logging;
 mod models;
 mod routes;
+mod safe_multicast;
 mod schema;
 mod server_config;
 mod traits;
@@ -33,7 +34,7 @@ fn main() -> std::io::Result<()> {
 }
 
 async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
-    let data = actix_web::web::Data::new(AppData::create(&server_config.database_url));
+    let data = actix_web::web::Data::new(AppData::create(&server_config.database_url).await);
     let logger = actix_web::web::Data::new(Mutex::new(LogRecorder::new()));
     /*let surveillance = actix_web::web::Data::new({
         let mut logger = logger.lock().await;
