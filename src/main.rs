@@ -1,3 +1,4 @@
+use actix::Actor;
 use actix_web::{App, HttpServer};
 use logging::LogRecorder;
 use tokio::{self, sync::Mutex};
@@ -10,7 +11,7 @@ mod routes;
 mod schema;
 mod server_config;
 mod traits;
-//mod media;
+mod actor;
 
 use logging::LoggableError as Error;
 type Result<T, E = Error> = std::result::Result<T, E>;
