@@ -136,7 +136,7 @@ async fn get_current(
             users::last_name,
             users::assigned_role,
         ))
-        .filter(users::id.eq(user.id))
+        .filter(users::id.eq(user.user_id))
         .first::<(String, String, String, UserRole)>(database)
         .optional()
     {
@@ -160,7 +160,7 @@ async fn get_current(
     };
 
     Ok(json!({
-        "id": user.id,
+        "id": user.user_id,
         "username": username,
         "first-name": first_name,
         "last-name": last_name,
@@ -260,7 +260,7 @@ async fn get_avatar(
 ) -> super::Result<impl Responder> {
     use crate::schema::users;
 
-    let user_id = query.id.unwrap_or(user.id);
+    let user_id = query.id.unwrap_or(user.user_id);
 
     let mut connection = state.connect_database();
 
@@ -367,7 +367,7 @@ async fn patch_avatar(
 
             let mut connection = state.connect_database();
 
-            return match diesel::update(users::table.filter(users::id.eq(user.id)))
+            return match diesel::update(users::table.filter(users::id.eq(user.user_id)))
                 .set(users::avatar.eq(image_bytes))
                 .execute(&mut connection)
             {
@@ -399,7 +399,7 @@ async fn delete_avatar(
 
     use crate::schema::users;
 
-    match diesel::update(users::table.filter(users::id.eq(user.id)))
+    match diesel::update(users::table.filter(users::id.eq(user.user_id)))
         .set(users::avatar.eq(Option::<Vec<u8>>::None))
         .execute(&mut connection)
     {

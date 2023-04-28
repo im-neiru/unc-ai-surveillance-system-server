@@ -105,7 +105,7 @@ impl LoggableResponseError {
 
     pub fn unauthorized(user: UserClaims) -> Self {
         Self {
-            log_message: format!("Denied access to user: {}", user.id),
+            log_message: format!("Denied access to user: {}", user.user_id),
             response_message: "User unauthorized".into(),
             level: LogLevel::Information,
             status_code: StatusCode::UNAUTHORIZED,

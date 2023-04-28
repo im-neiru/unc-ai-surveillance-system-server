@@ -21,7 +21,7 @@ async fn get_unidentified(
 
     if user.assigned_role == UserRole::SecurityGuard {
         let assigned_area: Option<String> = users::table
-            .filter(users::id.eq(user.id))
+            .filter(users::id.eq(user.user_id))
             .select(users::assigned_area)
             .first(&mut connection)
             .unwrap();
@@ -170,7 +170,7 @@ async fn patch_record(
 
     diesel::update(violations::table.filter(violations::id.eq(request.id)))
         .set((
-            violations::personnel_id.eq(Some(user.id)),
+            violations::personnel_id.eq(Some(user.user_id)),
             violations::first_name.eq(Some(&request.first_name)),
             violations::last_name.eq(Some(&request.last_name)),
             violations::category.eq(Some(&request.category)),
