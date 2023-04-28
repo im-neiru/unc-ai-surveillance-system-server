@@ -1,9 +1,10 @@
 use actix::Actor;
-use actix_web::{App, HttpServer};
+use actix_web::{web, App, HttpServer};
 use logging::LogRecorder;
 use tokio::{self, sync::Mutex};
 
 // local imports
+mod actor;
 mod data;
 mod logging;
 mod models;
@@ -11,7 +12,6 @@ mod routes;
 mod schema;
 mod server_config;
 mod traits;
-mod actor;
 
 use logging::LoggableError as Error;
 type Result<T, E = Error> = std::result::Result<T, E>;
@@ -24,9 +24,8 @@ use server_config::ServerConfig;
 
 fn main() -> std::io::Result<()> {
     let server_config = ServerConfig::load();
-    println!("Starting");
 
-    tokio::runtime::Builder::new_current_thread()
+    tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .unwrap()
@@ -36,6 +35,7 @@ fn main() -> std::io::Result<()> {
 async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     let data = actix_web::web::Data::new(AppData::create(&server_config.database_url));
     let logger = actix_web::web::Data::new(Mutex::new(LogRecorder::new()));
+
     /*let surveillance = actix_web::web::Data::new({
         let mut logger = logger.lock().await;
 
@@ -58,6 +58,7 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
             .service(routes::logs::scope())
             .service(routes::areas::scope())
             .service(routes::violations::scope())
+            .service(routes::socket::resource())
     })
     .bind(server_config.actix_socket_addr())?
     .run()
