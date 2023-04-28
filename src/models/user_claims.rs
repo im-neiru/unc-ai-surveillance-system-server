@@ -6,15 +6,16 @@ use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 
-use diesel::{AsChangeset, ExpressionMethods, QueryDsl, Queryable, RunQueryDsl};
+use diesel::{AsChangeset, ExpressionMethods, QueryDsl, RunQueryDsl};
 
 use crate::data::AppData;
 use crate::logging::{LogLevel, ResponseError};
+use crate::models::UserRole;
 
-#[derive(Debug, Queryable, AsChangeset)]
-#[diesel(table_name = crate::schema::users)]
+#[derive(Debug)]
 pub struct UserClaims {
-    pub id: uuid::Uuid,
+    pub session_id: uuid::Uuid,
+    pub user_id: uuid::Uuid,
     pub assigned_role: super::UserRole,
 }
 
@@ -46,7 +47,7 @@ impl actix_web::FromRequest for UserClaims {
 
             let mut database = state.connect_database();
 
-            let user_claims: Self = users::table
+            let (user_id, assigned_role): (uuid::Uuid, UserRole) = users::table
                 .inner_join(sessions::table)
                 .filter(users::deactivated.eq(false))
                 .filter(sessions::id.eq(jwtc.session_id))
@@ -59,7 +60,11 @@ impl actix_web::FromRequest for UserClaims {
                     StatusCode::UNAUTHORIZED,
                 )))?;
 
-            Ok(user_claims)
+            Ok(Self {
+                session_id: jwtc.session_id,
+                user_id,
+                assigned_role,
+            })
         })
     }
 }
