@@ -12,7 +12,7 @@ use crate::data::AppData;
 use crate::logging::{LogLevel, ResponseError};
 use crate::models::UserRole;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct UserClaims {
     pub session_id: uuid::Uuid,
     pub user_id: uuid::Uuid,

@@ -1,13 +1,12 @@
-use actix::Actor;
-use actix_web::{web, App, HttpServer};
+use actix_web::{App, HttpServer};
 use logging::LogRecorder;
 use tokio::{self, sync::Mutex};
 
 // local imports
-mod actor;
 mod data;
 mod logging;
 mod models;
+mod notifier;
 mod routes;
 mod schema;
 mod server_config;
@@ -21,6 +20,8 @@ mod tests;
 
 use data::AppData;
 use server_config::ServerConfig;
+
+use crate::notifier::ActiveEntry;
 
 fn main() -> std::io::Result<()> {
     let server_config = ServerConfig::load();
@@ -36,6 +37,32 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     let data = actix_web::web::Data::new(AppData::create(&server_config.database_url));
     let logger = actix_web::web::Data::new(Mutex::new(LogRecorder::new()));
 
+    let data2 = data.clone();
+    tokio::spawn(async move {
+        println!("Press any key to send");
+        loop {
+            let mut line = String::new();
+            std::io::stdin().read_line(&mut line).unwrap();
+
+            data2
+                .notifier_mut()
+                .await
+                .notify(notifier::Notification::NewActivation(
+                    [
+                        ActiveEntry {
+                            id: uuid::Uuid::new_v4(),
+                            activity: false,
+                        },
+                        ActiveEntry {
+                            id: uuid::Uuid::new_v4(),
+                            activity: true,
+                        },
+                    ]
+                    .to_vec(),
+                ))
+        }
+    });
+
     /*let surveillance = actix_web::web::Data::new({
         let mut logger = logger.lock().await;
 
@@ -48,6 +75,7 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     // insert
     //insert_sample_violations(data.clone());
 
+    println!("Server started at port {}", server_config.port);
     HttpServer::new(move || {
         App::new()
             .app_data(data.clone())

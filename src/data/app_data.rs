@@ -1,5 +1,6 @@
 use diesel::RunQueryDsl;
 use std::io::{Cursor, Read, Seek};
+use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use image::ImageOutputFormat;
 use image::{Rgb, RgbImage};
@@ -16,11 +17,13 @@ use xxhash_rust::xxh3::Xxh3;
 
 use crate::logging::{LogLevel, ResponseError};
 use crate::models::{JwtClaims, PasswordHash, ViolationKind, ViolationUnknownInsert};
+use crate::notifier::Notifier;
 
 pub struct AppData<'a> {
     db_pool: Pool<ConnectionManager<PgConnection>>,
     xxh3: Mutex<Xxh3>,
     font: Font<'a>,
+    notifier: RwLock<Notifier>,
 }
 
 impl<'a> AppData<'a> {
@@ -41,7 +44,18 @@ impl<'a> AppData<'a> {
                 ))
                 .unwrap()
             },
+            notifier: Notifier::default().into(),
         }
+    }
+
+    #[inline(always)]
+    pub async fn notifier(&self) -> RwLockReadGuard<'_, Notifier> {
+        self.notifier.read().await
+    }
+
+    #[inline(always)]
+    pub async fn notifier_mut(&self) -> RwLockWriteGuard<'_, Notifier> {
+        self.notifier.write().await
     }
 
     pub fn connect_database(&self) -> PooledConnection<ConnectionManager<PgConnection>> {
