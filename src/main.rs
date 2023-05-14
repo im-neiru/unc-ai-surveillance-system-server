@@ -11,6 +11,7 @@ mod routes;
 mod schema;
 mod server_config;
 mod traits;
+mod surveillance;
 
 use logging::LoggableError as Error;
 type Result<T, E = Error> = std::result::Result<T, E>;
@@ -21,7 +22,7 @@ mod tests;
 use data::AppData;
 use server_config::ServerConfig;
 
-use crate::notifier::ActiveEntry;
+use crate::{notifier::ActiveEntry, surveillance::Surveillance};
 
 fn main() -> std::io::Result<()> {
     let server_config = ServerConfig::load();
@@ -36,32 +37,7 @@ fn main() -> std::io::Result<()> {
 async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     let data = actix_web::web::Data::new(AppData::create(&server_config.database_url));
     let logger = actix_web::web::Data::new(Mutex::new(LogRecorder::new()));
-
-    let data2 = data.clone();
-    tokio::spawn(async move {
-        println!("Press any key to send");
-        loop {
-            let mut line = String::new();
-            std::io::stdin().read_line(&mut line).unwrap();
-
-            data2
-                .notifier_mut()
-                .await
-                .notify(notifier::Notification::NewActivation(
-                    [
-                        ActiveEntry {
-                            id: uuid::Uuid::new_v4(),
-                            activity: false,
-                        },
-                        ActiveEntry {
-                            id: uuid::Uuid::new_v4(),
-                            activity: true,
-                        },
-                    ]
-                    .to_vec(),
-                ))
-        }
-    });
+    let surveillance = Surveillance::new();
 
     /*let surveillance = actix_web::web::Data::new({
         let mut logger = logger.lock().await;
