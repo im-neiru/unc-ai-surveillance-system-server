@@ -159,6 +159,19 @@ async fn create_session(
     state.jwt_encode(&JwtClaims::new(session_id))
 }
 
+#[actix_web::delete("/logout")]
+async fn delete_logout(
+    (state, user): (web::Data<AppData<'_>>, UserClaims),
+) -> super::Result<impl Responder> {
+    let mut connection = &mut *state.connect_database();
+    use crate::schema::sessions;
+
+    diesel::delete(sessions::table.filter(sessions::id.eq(user.session_id)))
+        .execute(connection).ok();
+
+    Ok("".customize().with_status(StatusCode::NO_CONTENT))
+}
+
 #[actix_web::get("/current")]
 async fn get_current(
     (state, user): (web::Data<AppData<'_>>, UserClaims),
@@ -492,4 +505,5 @@ pub fn scope() -> actix_web::Scope {
         .service(get_avatar)
         .service(patch_avatar)
         .service(delete_avatar)
+        .service(delete_logout)
 }
