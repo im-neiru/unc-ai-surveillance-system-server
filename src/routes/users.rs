@@ -280,8 +280,8 @@ async fn get_guard(
                         .is_not_null()
                         .and(assigned_role.eq(UserRole::SecurityGuard)),
                 )
-                .select((id, first_name, last_name))
-                .load::<UserBasicSelect>(&mut connection)
+                .select((id, first_name, last_name, assigned_area))
+                .load::<GuardSelect>(&mut connection)
                 .unwrap();
 
             Ok(serde_json::to_string(&guards)
