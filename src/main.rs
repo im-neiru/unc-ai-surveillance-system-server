@@ -10,8 +10,8 @@ mod notifier;
 mod routes;
 mod schema;
 mod server_config;
-mod traits;
 mod surveillance;
+mod traits;
 
 use logging::LoggableError as Error;
 type Result<T, E = Error> = std::result::Result<T, E>;
@@ -37,8 +37,8 @@ fn main() -> std::io::Result<()> {
 async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     let data = actix_web::web::Data::new(AppData::create(&server_config.database_url));
     let logger = actix_web::web::Data::new(Mutex::new(LogRecorder::new()));
-    let surveillance = Surveillance::new(&data);
 
+    tokio::spawn(async move { Surveillance::new(data.clone()).run().await });
     /*let surveillance = actix_web::web::Data::new({
         let mut logger = logger.lock().await;
 
@@ -56,7 +56,6 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
         App::new()
             .app_data(data.clone())
             .app_data(logger.clone())
-            //.app_data(surveillance.clone())
             .wrap(logging::LogMiddleware)
             .service(routes::users::scope())
             .service(routes::logs::scope())
@@ -69,6 +68,7 @@ async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     .await
 }
 
+/*
 #[allow(unused)]
 fn insert_sample_violations(data: actix_web::web::Data<AppData>) {
     {
@@ -97,3 +97,5 @@ fn insert_sample_violations(data: actix_web::web::Data<AppData>) {
         )
     }
 }
+
+*/

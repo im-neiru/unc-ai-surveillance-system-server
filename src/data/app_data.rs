@@ -17,7 +17,7 @@ use xxhash_rust::xxh3::Xxh3;
 
 use crate::logging::{LogLevel, ResponseError};
 use crate::models::{JwtClaims, PasswordHash, ViolationKind, ViolationUnknownInsert};
-use crate::notifier::Notifier;
+use crate::notifier::{Notification, Notifier};
 
 pub struct AppData<'a> {
     db_pool: Pool<ConnectionManager<PgConnection>>,
@@ -152,7 +152,7 @@ impl<'a> AppData<'a> {
         xxh3.digest128()
     }
 
-    pub fn store_violation(
+    pub async fn store_violation(
         &self,
         area_code: String,
         violation_kind: ViolationKind,
@@ -173,7 +173,7 @@ impl<'a> AppData<'a> {
             stream.read_to_end(&mut image_buffer).unwrap();
         }
 
-        diesel::insert_into(violations::table)
+        let violation: uuid::Uuid = diesel::insert_into(violations::table)
             .values(ViolationUnknownInsert {
                 area_code,
                 violation_kind,
@@ -181,8 +181,13 @@ impl<'a> AppData<'a> {
                 image_bytes: image_buffer,
                 identified: false,
             })
-            .execute(&mut connection)
+            .returning(violations::id)
+            .get_result(&mut connection)
             .unwrap();
+
+        self.notifier()
+            .await
+            .notify(Notification::NewViolations(vec![violation]))
     }
 
     fn random_color() -> Rgb<u8> {
