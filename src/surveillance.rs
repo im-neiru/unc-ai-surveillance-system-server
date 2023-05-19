@@ -1,7 +1,8 @@
 use actix_web::web;
 use diesel::{
     query_dsl::{methods::FilterDsl, select_dsl::SelectDsl},
-    ExpressionMethods, RunQueryDsl,
+    r2d2::{ConnectionManager, PooledConnection},
+    ExpressionMethods, PgConnection, RunQueryDsl,
 };
 use image::{Rgb, RgbImage};
 use ndarray::IxDyn;
@@ -16,20 +17,19 @@ use opencv::{
     videoio::{VideoCapture, VideoCaptureTrait, CAP_FFMPEG},
 };
 use ort::{tensor::InputTensor, ExecutionProvider};
-use std::sync::{Mutex, RwLock};
+use std::sync::{Arc, RwLock};
 
 use crate::data::AppData;
 
-pub struct Surveillance<'s> {
+pub struct Surveillance<'s>(Arc<RwLock<SurveillanceInner<'s>>>);
+
+struct SurveillanceInner<'s> {
     session: ort::InMemorySession<'s>,
-    cameras: Mutex<Vec<RtspCamera>>,
-    app_data: web::Data<AppData<'s>>,
+    cameras: Vec<RtspCamera>,
 }
 
 impl<'s> Surveillance<'s> {
-    pub fn new(app_data: web::Data<AppData>) -> Self {
-        let mut connection = app_data.connect_database();
-
+    pub fn new(mut connection: PooledConnection<ConnectionManager<PgConnection>>) -> Self {
         use crate::schema::cameras;
 
         let entries: Vec<(uuid::Uuid, String, String, String)> = cameras::table
@@ -43,42 +43,46 @@ impl<'s> Surveillance<'s> {
             .load(&mut connection)
             .unwrap();
 
-        Self {
-            cameras: Mutex::new(
-                entries
-                    .iter()
-                    .map(|(id, url, label, area_code)| {
-                        let capture: Option<VideoCapture> =
-                            VideoCapture::from_file(url, CAP_FFMPEG).ok();
-                        let mut width = 640.0;
-                        let mut height = 640.0;
+        Self(Arc::new(RwLock::new(SurveillanceInner {
+            cameras: entries
+                .iter()
+                .map(|(id, url, label, area_code)| {
+                    let capture: Option<VideoCapture> =
+                        VideoCapture::from_file(url, CAP_FFMPEG).ok();
 
-                        if let Some(cap) = &capture {
-                            width = cap.get(CAP_PROP_FRAME_WIDTH).unwrap();
-                            height = cap.get(CAP_PROP_FRAME_HEIGHT).unwrap();
-                        }
-                        RtspCamera {
-                            id: *id,
-                            label: label.to_owned(),
-                            area_code: area_code.to_string(),
-                            capture,
-                            buffer: Frame(unsafe {
-                                Mat::new_size(
-                                    Size_ {
-                                        width: width as _,
-                                        height: height as _,
-                                    },
-                                    CV_8UC3,
-                                )
-                                .unwrap()
-                                .into()
-                            }),
-                            width: width as _,
-                            height: height as _,
-                        }
-                    })
-                    .collect(),
-            ),
+                    let mut width = 640.0;
+                    let mut height = 640.0;
+
+                    if let Some(cap) = &capture {
+                        width = cap.get(CAP_PROP_FRAME_WIDTH).unwrap();
+                        height = cap.get(CAP_PROP_FRAME_HEIGHT).unwrap();
+                    }
+
+                    let capture = match capture {
+                        Some(cap) => Some(Arc::new(RwLock::new(cap))),
+                        None => None,
+                    };
+
+                    RtspCamera {
+                        id: *id,
+                        label: label.to_owned(),
+                        area_code: area_code.to_string(),
+                        capture,
+                        buffer: Frame(unsafe {
+                            Mat::new_size(
+                                Size_ {
+                                    width: width as _,
+                                    height: height as _,
+                                },
+                                CV_8UC3,
+                            )
+                            .unwrap()
+                        }),
+                        width: width as _,
+                        height: height as _,
+                    }
+                })
+                .collect(),
             session: {
                 let environment = ort::Environment::builder()
                     .with_log_level(ort::LoggingLevel::Verbose)
@@ -95,58 +99,55 @@ impl<'s> Surveillance<'s> {
                     .with_model_from_memory(include_bytes!("../model.onnx"))
                     .unwrap()
             },
-            app_data,
-        }
+        })))
     }
 
-    pub async fn run(&mut self) {
-        async {
-            loop {
-                for camera in self.cameras.lock().unwrap().iter_mut() {
-                    if let Some(frame) = camera.next() {
-                        frame.fit(camera.width, camera.height);
-                        let predictions = self.infer(&frame);
-                        for predicted_box in predictions {
-                            match predicted_box.class {
-                                Label::FacingBackwards => {
-                                    self.app_data
-                                        .store_violation(
-                                            camera.area_code.clone(),
-                                            crate::models::ViolationKind::FootTraffic,
-                                            predicted_box.get_image(&frame),
-                                        )
-                                        .await
-                                }
-                                Label::MaskWearedIncorrect => {
-                                    self.app_data
-                                        .store_violation(
-                                            camera.area_code.clone(),
-                                            crate::models::ViolationKind::FacemaskProtocol,
-                                            predicted_box.get_image(&frame),
-                                        )
-                                        .await
-                                }
-                                Label::WithoutMask => {
-                                    self.app_data
-                                        .store_violation(
-                                            camera.area_code.clone(),
-                                            crate::models::ViolationKind::FacemaskProtocol,
-                                            predicted_box.get_image(&frame),
-                                        )
-                                        .await
-                                }
-                                _ => (),
+    pub async fn run(&mut self, app_data: &AppData<'s>) {
+        loop {
+            for camera in self.0.clone().write().unwrap().cameras.iter_mut() {
+                if let Some(frame) = camera.next() {
+                    frame.fit(camera.width(), camera.height());
+                    let predictions = self.infer(&frame);
+                    for predicted_box in predictions {
+                        match predicted_box.class {
+                            Label::FacingBackwards => {
+                                app_data
+                                    .store_violation(
+                                        camera.area_code(),
+                                        crate::models::ViolationKind::FootTraffic,
+                                        predicted_box.get_image(&frame),
+                                    )
+                                    .await
                             }
+                            Label::MaskWearedIncorrect => {
+                                app_data
+                                    .store_violation(
+                                        camera.area_code(),
+                                        crate::models::ViolationKind::FacemaskProtocol,
+                                        predicted_box.get_image(&frame),
+                                    )
+                                    .await
+                            }
+                            Label::WithoutMask => {
+                                app_data
+                                    .store_violation(
+                                        camera.area_code(),
+                                        crate::models::ViolationKind::FacemaskProtocol,
+                                        predicted_box.get_image(&frame),
+                                    )
+                                    .await
+                            }
+                            _ => (),
                         }
                     }
                 }
             }
         }
-        .await
     }
 
     fn infer(&self, frame: &Frame) -> Vec<OutputBox> {
-        let output = self.session.run([frame.as_input()]).unwrap();
+        let binding = self.0.write().unwrap();
+        let output = binding.session.run([frame.as_input()]).unwrap();
         let output = output
             .get(0)
             .unwrap()
@@ -231,11 +232,17 @@ pub struct RtspCamera {
     id: uuid::Uuid,
     label: String,
     area_code: String,
-    capture: Option<VideoCapture>,
+    capture: Option<Arc<RwLock<VideoCapture>>>,
     buffer: Frame,
     width: u32,
     height: u32,
 }
+
+unsafe impl Sync for RtspCamera {}
+unsafe impl Send for RtspCamera {}
+
+unsafe impl Sync for Frame {}
+unsafe impl Send for Frame {}
 
 impl RtspCamera {
     pub fn next(&mut self) -> Option<Frame> {
@@ -243,17 +250,31 @@ impl RtspCamera {
             == self
                 .capture
                 .as_mut()?
-                .read(&mut self.buffer.0.get_mut().unwrap())
+                .write()
+                .unwrap()
+                .read(&mut self.buffer.0)
                 .ok()
         {
-            return Some(self.buffer);
+            return Some(Frame(self.buffer.0.clone()));
         }
 
         None
     }
+
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+
+    pub fn area_code(&self) -> &str {
+        self.area_code.as_str()
+    }
 }
 
-pub struct Frame(RwLock<Mat>);
+pub struct Frame(Mat);
 
 impl Frame {
     pub(crate) fn capture(video: &mut VideoCapture, width: u32, height: u32) -> Self {
@@ -268,7 +289,7 @@ impl Frame {
             .unwrap()
         };
         video.read(&mut buffer).unwrap();
-        Self(buffer.into())
+        Self(buffer)
     }
 
     pub(crate) fn fit(&self, frame_width: u32, frame_height: u32) -> Self {
@@ -277,7 +298,7 @@ impl Frame {
         let y_offset = (frame_height - min) / 2;
 
         let cropped = Mat::roi(
-            self.0.get_mut().unwrap(),
+            &self.0,
             opencv::core::Rect {
                 x: x_offset as _,
                 y: y_offset as _,
@@ -309,7 +330,7 @@ impl Frame {
             INTER_LINEAR,
         )
         .unwrap();
-        Self(rescaled.into())
+        Self(rescaled)
     }
 
     pub(crate) fn as_input(&self) -> InputTensor {
@@ -317,8 +338,7 @@ impl Frame {
 
         for x in 0..640 {
             for y in 0..640 {
-                let element: opencv::core::Point3_<u8> =
-                    *self.0.read().unwrap().at_2d(x as _, y as _).unwrap();
+                let element: opencv::core::Point3_<u8> = *self.0.at_2d(x as _, y as _).unwrap();
                 tensor[[0, 0, x, y]] = (element.x as f32) / 255.0; // R
                 tensor[[0, 1, x, y]] = (element.y as f32) / 255.0; // G
                 tensor[[0, 2, x, y]] = (element.z as f32) / 255.0; // B
@@ -357,8 +377,6 @@ impl OutputBox {
         RgbImage::from_fn(width, height, |x, y| {
             let pixel: Point3_<u8> = *frame
                 .0
-                .read()
-                .unwrap()
                 .at_2d(x as i32 + self.x1 as i32, y as i32 + self.y1 as i32)
                 .unwrap();
             Rgb::<u8>([pixel.x, pixel.y, pixel.z])

@@ -37,8 +37,7 @@ fn main() -> std::io::Result<()> {
 async fn start_server(server_config: &ServerConfig) -> std::io::Result<()> {
     let data = actix_web::web::Data::new(AppData::create(&server_config.database_url));
     let logger = actix_web::web::Data::new(Mutex::new(LogRecorder::new()));
-
-    tokio::spawn(async move { Surveillance::new(data.clone()).run().await });
+    
     /*let surveillance = actix_web::web::Data::new({
         let mut logger = logger.lock().await;
 

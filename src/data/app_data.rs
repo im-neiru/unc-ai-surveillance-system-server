@@ -24,6 +24,7 @@ pub struct AppData<'a> {
     xxh3: Mutex<Xxh3>,
     font: Font<'a>,
     notifier: RwLock<Notifier>,
+    surveillance: crate::Surveillance<'a>,
 }
 
 impl<'a> AppData<'a> {
@@ -31,12 +32,15 @@ impl<'a> AppData<'a> {
 
     pub fn create(database_url: &str) -> Self {
         let manager = ConnectionManager::new(database_url);
+        let db_pool = Pool::builder()
+            .test_on_check_out(true)
+            .build(manager)
+            .expect("Could not build connection pool");
+
+        let connection = db_pool.get().unwrap();
 
         Self {
-            db_pool: Pool::builder()
-                .test_on_check_out(true)
-                .build(manager)
-                .expect("Could not build connection pool"),
+            db_pool,
             xxh3: Mutex::new(Xxh3::with_seed(0x13ac0750331f23db)),
             font: {
                 Font::try_from_vec(Vec::from(
@@ -45,6 +49,7 @@ impl<'a> AppData<'a> {
                 .unwrap()
             },
             notifier: Notifier::default().into(),
+            surveillance: crate::Surveillance::new(connection),
         }
     }
 
@@ -154,7 +159,7 @@ impl<'a> AppData<'a> {
 
     pub async fn store_violation(
         &self,
-        area_code: String,
+        area_code: &str,
         violation_kind: ViolationKind,
         image: image::RgbImage,
     ) {
@@ -175,7 +180,7 @@ impl<'a> AppData<'a> {
 
         let violation: uuid::Uuid = diesel::insert_into(violations::table)
             .values(ViolationUnknownInsert {
-                area_code,
+                area_code: area_code.to_string(),
                 violation_kind,
                 date_time: chrono::Utc::now().naive_utc(),
                 image_bytes: image_buffer,
