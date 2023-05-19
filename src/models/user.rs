@@ -1,7 +1,9 @@
 use actix_web::http::StatusCode;
 use diesel::{
-    deserialize::FromSqlRow, sql_types::Text, AsChangeset, ExpressionMethods, Insertable,
-    OptionalExtension, PgConnection, QueryDsl, Queryable, RunQueryDsl,
+    deserialize::FromSqlRow,
+    sql_types::{Nullable, Text},
+    AsChangeset, ExpressionMethods, Insertable, OptionalExtension, PgConnection, QueryDsl,
+    Queryable, RunQueryDsl,
 };
 use serde::Serialize;
 
@@ -32,7 +34,7 @@ pub struct UserSelect {
     pub deactivated: bool,
     pub assigned_role: UserRole,
     pub assigned_area: Option<String>,
-    pub avatar: Option<Vec<u8>>
+    pub avatar: Option<Vec<u8>>,
 }
 
 impl UserSelect {
@@ -77,10 +79,36 @@ impl FromSqlRow<(diesel::sql_types::Uuid, Text, Text), diesel::pg::Pg> for UserB
     fn build_from_row<'a>(
         row: &impl diesel::row::Row<'a, diesel::pg::Pg>,
     ) -> diesel::deserialize::Result<Self> {
-        Ok(Self{
+        Ok(Self {
             id: row.get_value("id")?,
             last_name: row.get_value("last_name")?,
             first_name: row.get_value("first_name")?,
+        })
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct GuardSelect {
+    pub id: uuid::Uuid,
+    #[serde(rename = "last-name")]
+    pub last_name: String,
+    #[serde(rename = "first-name")]
+    pub first_name: String,
+    #[serde(rename = "area-code")]
+    pub area_code: Option<String>,
+}
+
+impl FromSqlRow<(diesel::sql_types::Uuid, Text, Text, Nullable<Text>), diesel::pg::Pg>
+    for GuardSelect
+{
+    fn build_from_row<'a>(
+        row: &impl diesel::row::Row<'a, diesel::pg::Pg>,
+    ) -> diesel::deserialize::Result<Self> {
+        Ok(Self {
+            id: row.get_value("id")?,
+            last_name: row.get_value("last_name")?,
+            first_name: row.get_value("first_name")?,
+            area_code: row.get_value("assigned_area")?,
         })
     }
 }

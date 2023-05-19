@@ -24,6 +24,7 @@ pub use session::SessionInsert;
 pub use user::UserBasicSelect;
 pub use user::UserInsert;
 pub use user::UserSelect;
+pub use user::GuardSelect;
 pub use user_claims::UserClaims;
 pub use violation::IdentifiedViolation;
 pub use violation::ViolationUnknown;

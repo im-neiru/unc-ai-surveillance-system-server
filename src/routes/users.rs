@@ -18,8 +18,8 @@ use serde_json::json;
 use crate::data::AppData;
 use crate::logging::{LogLevel, ResponseError};
 use crate::models::{
-    DeviceOs, DeviceSignature, JwtClaims, SessionInsert, UserBasicSelect, UserClaims, UserInsert,
-    UserRole, UserSelect,
+    DeviceOs, DeviceSignature, GuardSelect, JwtClaims, SessionInsert, UserBasicSelect, UserClaims,
+    UserInsert, UserRole, UserSelect,
 };
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -68,6 +68,43 @@ impl CreateUserRequest {
 #[derive(Deserialize)]
 struct GetAvatarQuery {
     id: Option<uuid::Uuid>,
+}
+
+enum Filter {
+    Assigned = 0,
+    Unassigned = 1,
+}
+
+#[derive(Deserialize)]
+struct GuardQuery {
+    filter: Option<Filter>,
+}
+
+impl<'de> Deserialize<'de> for Filter {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = u32::deserialize(deserializer)?;
+        match value {
+            0 => Ok(Self::Assigned),
+            1 => Ok(Self::Unassigned),
+            _ => Err(serde::de::Error::custom(format!(
+                "invalid value for filter: {value}"
+            ))),
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct GuardResponse {
+    id: uuid::Uuid,
+    #[serde(rename = "last-name")]
+    last_name: String,
+    #[serde(rename = "first-name")]
+    first_name: String,
+    #[serde(rename = "area-code")]
+    area_code: Option<String>,
 }
 
 #[post("/login")]
@@ -222,9 +259,9 @@ async fn post_register(
         .with_status(StatusCode::OK))
 }
 
-#[actix_web::get("/unassigned")]
-async fn get_unassigned(
-    (state, user): (web::Data<AppData<'_>>, UserClaims),
+#[actix_web::get("/guard")]
+async fn get_guard(
+    (state, user, query): (web::Data<AppData<'_>>, UserClaims, web::Query<GuardQuery>),
 ) -> super::Result<impl Responder> {
     use crate::schema::users::dsl::*;
 
@@ -234,20 +271,52 @@ async fn get_unassigned(
 
     let mut connection = state.connect_database();
 
-    let guards = users
-        .filter(deactivated.eq(false))
-        .filter(
-            assigned_area
-                .is_null()
-                .and(assigned_role.eq(UserRole::SecurityGuard)),
-        )
-        .select((id, first_name, last_name))
-        .load::<UserBasicSelect>(&mut connection)
-        .unwrap();
+    match query.filter {
+        Some(Filter::Assigned) => {
+            let guards = users
+                .filter(deactivated.eq(false))
+                .filter(
+                    assigned_area
+                        .is_not_null()
+                        .and(assigned_role.eq(UserRole::SecurityGuard)),
+                )
+                .select((id, first_name, last_name))
+                .load::<UserBasicSelect>(&mut connection)
+                .unwrap();
 
-    Ok(serde_json::to_string(&guards)
-        .customize()
-        .with_status(StatusCode::OK))
+            Ok(serde_json::to_string(&guards)
+                .customize()
+                .with_status(StatusCode::OK))
+        }
+        Some(Filter::Unassigned) => {
+            let guards = users
+                .filter(deactivated.eq(false))
+                .filter(
+                    assigned_area
+                        .is_null()
+                        .and(assigned_role.eq(UserRole::SecurityGuard)),
+                )
+                .select((id, first_name, last_name, assigned_area))
+                .load::<GuardSelect>(&mut connection)
+                .unwrap();
+
+            Ok(serde_json::to_string(&guards)
+                .customize()
+                .with_status(StatusCode::OK))
+        }
+        None => {
+            let guards = users
+                .filter(deactivated.eq(false))
+                .filter(assigned_role.eq(UserRole::SecurityGuard))
+                .select((id, first_name, last_name, assigned_area))
+                .load::<GuardSelect>(&mut connection)
+                .unwrap();
+
+            Ok(serde_json::to_string(&guards)
+                .customize()
+                .with_status(StatusCode::OK))
+        }
+    }
 }
 
 #[actix_web::get("/avatar")]
@@ -419,7 +488,7 @@ pub fn scope() -> actix_web::Scope {
         .service(post_login)
         .service(get_current)
         .service(post_register)
-        .service(get_unassigned)
+        .service(get_guard)
         .service(get_avatar)
         .service(patch_avatar)
         .service(delete_avatar)
